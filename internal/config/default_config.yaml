@@ -1,0 +1,21 @@
+embedding:
+  is_embed_enabled: false
+  embedding_provider: "ollama"
+  ollama_embedding_model: "nomic-embed-text"
+  ollama_embedding_base_url: "http://localhost:11434"
+  ollama_http_timeout_in_sec: 10
+
+database:
+  path: "~/.recall/recall.db"
+
+search:
+  top_k: 10
+  default_search_limit: 100
+  fuzzy_search_limit: 500
+  suggestion_limit: 10
+
+session:
+  gap_seconds: 600
+
+processor:
+  batch_size: 5000
