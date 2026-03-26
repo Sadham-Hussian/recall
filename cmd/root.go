@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"recall/cmd/ask"
+	"recall/cmd/doctor"
 	"recall/cmd/embed"
 	"recall/cmd/query"
 	"recall/cmd/record"
@@ -42,6 +43,7 @@ func init() {
 
 	rootCmd.AddCommand(ask.GetAskCmd())
 
+	rootCmd.AddCommand(doctor.GetDoctorCmd())
 }
 
 func Execute() error {
