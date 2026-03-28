@@ -12,6 +12,8 @@ builds:
       - arm64
     tags:
       - sqlite_fts5
+    env:
+      - CGO_ENABLED=1
 
 archives:
   - format: tar.gz
