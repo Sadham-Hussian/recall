@@ -15,6 +15,10 @@ builds:
     env:
       - CGO_ENABLED=1
 
+dockers:
+  - image_templates:
+      - "ghcr.io/goreleaser/goreleaser-cross:latest"
+
 archives:
   - format: tar.gz
 
