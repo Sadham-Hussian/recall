@@ -128,3 +128,46 @@ func SameProject(cmdCwd string, projectRoot string) bool {
 
 	return strings.HasPrefix(cmdCwd, projectRoot)
 }
+
+func BuildFTSQueryForSemanticSearch(q string) string {
+	q = strings.ToLower(q)
+
+	// Replace characters that break FTS parsing
+	replacer := strings.NewReplacer(
+		":", " ",
+		"-", " ",
+		".", " ",
+		",", " ",
+		"(", " ",
+		")", " ",
+		"\"", " ",
+		"'", " ",
+	)
+	q = replacer.Replace(q)
+
+	words := strings.Fields(q)
+
+	// Optional: remove very short / useless tokens
+	var terms []string
+	for _, w := range words {
+		if len(w) < 2 {
+			continue
+		}
+
+		// skip common stopwords (optional but useful)
+		switch w {
+		case "the", "is", "if", "on", "in", "at", "to", "for", "a", "an", "of", "using", "check":
+			continue
+		}
+
+		terms = append(terms, w+"*") // prefix match
+	}
+
+	// fallback: if everything removed, return empty
+	if len(terms) == 0 {
+		return ""
+	}
+
+	// OR-based query (better recall)
+	return strings.Join(terms, " OR ")
+}

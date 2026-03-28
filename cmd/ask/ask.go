@@ -51,7 +51,7 @@ var askCmd = &cobra.Command{
 			log.Fatalf("failed to create search service: %v", err)
 		}
 
-		results, err := searchService.Search(query, cfg.Search.TopK)
+		results, err := searchService.Search(query, cfg.Search.TopK, cfg.Search.FTSSearchLimit, cfg.Search.SemanticCandidateLimit)
 		if err != nil {
 			log.Fatalf("search failed: %v", err)
 		}
@@ -65,7 +65,7 @@ var askCmd = &cobra.Command{
 		fmt.Println("──────────────────────")
 
 		for i, r := range results {
-			fmt.Printf("%d. %s (%.4f)\n", i+1, r.Command, r.Score)
+			fmt.Printf("%d. %s\n", i+1, r.Command)
 		}
 
 		fmt.Println()

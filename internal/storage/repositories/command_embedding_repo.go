@@ -23,14 +23,15 @@ func (r *CommandEmbeddingRepository) InsertEmbedding(e models.CommandEmbedding) 
 	`, e.CommandExecutionID, e.Model, e.Dimensions, e.Embedding).Error
 }
 
-func (r *CommandEmbeddingRepository) FetchAllEmbeddings(model string) ([]models.EmbeddingSearchResult, error) {
+func (r *CommandEmbeddingRepository) FetchAllEmbeddings(model string, limit int) ([]models.EmbeddingSearchResult, error) {
 	rows, err := r.db.Raw(`
 		SELECT c.command, e.embedding
 		FROM command_embeddings e
 		JOIN command_executions c
 		ON c.id = e.command_execution_id
 		WHERE e.model = ?
-	`, model).Rows()
+		LIMIT ?
+	`, model, limit).Rows()
 
 	if err != nil {
 		return nil, err

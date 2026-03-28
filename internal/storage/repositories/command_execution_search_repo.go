@@ -63,3 +63,24 @@ func (r *CommandExecutionSearchRepository) FuzzySearch(query string, limit int) 
 
 	return result, nil
 }
+
+func (r *CommandExecutionSearchRepository) FTSSearch(query string, limit int) ([]models.FTSResult, error) {
+
+	sql := `
+		SELECT
+			e.command,
+			bm25(command_executions_fts) as rank
+		FROM command_executions_fts
+		JOIN command_executions e 
+			ON e.id = command_executions_fts.rowid
+		WHERE command_executions_fts MATCH ?
+		AND e.command NOT LIKE 'recall%'
+		AND e.command NOT LIKE './recall%'
+		ORDER BY rank
+		LIMIT ?;
+	`
+
+	var results []models.FTSResult
+	err := r.db.Raw(sql, query, limit).Scan(&results).Error
+	return results, err
+}

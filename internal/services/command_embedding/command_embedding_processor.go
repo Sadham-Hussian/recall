@@ -3,6 +3,7 @@ package command_embedding
 import (
 	"fmt"
 	"recall/internal/embedding"
+	"recall/internal/search"
 	"recall/internal/storage"
 	"recall/internal/storage/models"
 	"recall/internal/storage/repositories"
@@ -10,11 +11,12 @@ import (
 )
 
 type CommandEmbeddingProcessor struct {
-	CommandExecutionRepo      *repositories.CommandExecutionRepository
-	CommandEmbeddingRepo      *repositories.CommandEmbeddingRepository
-	CommandEmbeddingQueueRepo *repositories.CommandEmbeddingQueueRepository
-	Embedder                  embedding.Embedder
-	model                     string
+	CommandExecutionRepo       *repositories.CommandExecutionRepository
+	CommandExecutionSearchRepo *repositories.CommandExecutionSearchRepository
+	CommandEmbeddingRepo       *repositories.CommandEmbeddingRepository
+	CommandEmbeddingQueueRepo  *repositories.CommandEmbeddingQueueRepository
+	Embedder                   embedding.Embedder
+	model                      string
 }
 
 func NewEmbeddingProcessor(
@@ -27,11 +29,12 @@ func NewEmbeddingProcessor(
 		return nil, err
 	}
 	return &CommandEmbeddingProcessor{
-		CommandExecutionRepo:      repositories.NewCommandExecutionRepository(db),
-		CommandEmbeddingRepo:      repositories.NewCommandEmbeddingRepository(db),
-		CommandEmbeddingQueueRepo: repositories.NewCommandEmbeddingQueueRepository(db),
-		Embedder:                  embedder,
-		model:                     model,
+		CommandExecutionRepo:       repositories.NewCommandExecutionRepository(db),
+		CommandExecutionSearchRepo: repositories.NewCommandExecutionSearchRepository(db),
+		CommandEmbeddingRepo:       repositories.NewCommandEmbeddingRepository(db),
+		CommandEmbeddingQueueRepo:  repositories.NewCommandEmbeddingQueueRepository(db),
+		Embedder:                   embedder,
+		model:                      model,
 	}, nil
 }
 
@@ -89,45 +92,98 @@ func (p *CommandEmbeddingProcessor) Process(batchSize int) error {
 	return nil
 }
 
-func (s *CommandEmbeddingProcessor) Search(query string, topK int) ([]models.SearchResult, error) {
+func (s *CommandEmbeddingProcessor) Search(query string, topK int, ftsSearchLimit, embeddingCandidateLimit int) ([]models.SearchResult, error) {
 	// 1. Embed query
 	queryVec, err := s.Embedder.Embed(query)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Fetch stored embeddings
-	data, err := s.CommandEmbeddingRepo.FetchAllEmbeddings(s.model)
+	// 2. Fetch semantic candidates
+	data, err := s.CommandEmbeddingRepo.FetchAllEmbeddings(s.model, embeddingCandidateLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	var results []models.SearchResult
+	resultMap := make(map[string]*models.SearchResult)
 
-	// 3. Compute similarity
+	// 3. Semantic scoring
 	for _, item := range data {
 		vec, err := embedding.BytesToFloats(item.Vector)
 		if err != nil {
-			continue // skip corrupted rows
+			continue
 		}
 
 		score := embedding.CosineSimilarity(queryVec, vec)
 
-		results = append(results, models.SearchResult{
-			Command: item.Command,
-			Score:   score,
-		})
+		resultMap[item.Command] = &models.SearchResult{
+			Command:       item.Command,
+			SemanticScore: score,
+		}
 	}
 
-	// 4. Sort DESC
+	// 4. FTS search
+	ftsQuery := search.BuildFTSQueryForSemanticSearch(query)
+	if ftsQuery != "" {
+		ftsResults, err := s.CommandExecutionSearchRepo.FTSSearch(ftsQuery, ftsSearchLimit)
+		if err == nil {
+
+			// 1. Deduplicate + keep BEST rank (lower bm25 = better)
+			bestFTS := make(map[string]float64)
+
+			for _, fts := range ftsResults {
+				existingRank, ok := bestFTS[fts.Command]
+				if !ok || fts.Rank < existingRank {
+					bestFTS[fts.Command] = fts.Rank
+				}
+			}
+
+			// 2. Merge into resultMap
+			for cmd, rank := range bestFTS {
+				r, exists := resultMap[cmd]
+				if !exists {
+					r = &models.SearchResult{
+						Command: cmd,
+					}
+					resultMap[cmd] = r
+				}
+
+				score := normalizeFTSScore(rank)
+
+				if score > r.FTSScore {
+					r.FTSScore = score
+				}
+			}
+		}
+	}
+
+	// 5. Final scoring (initial version)
+	var results []models.SearchResult
+
+	for _, r := range resultMap {
+		r.FinalScore =
+			0.7*r.SemanticScore +
+				0.3*r.FTSScore
+
+		results = append(results, *r)
+	}
+
+	// 6. Sort
 	sort.Slice(results, func(i, j int) bool {
-		return results[i].Score > results[j].Score
+		return results[i].FinalScore > results[j].FinalScore
 	})
 
-	// 5. Top K
+	// 7. Top K
 	if len(results) > topK {
 		results = results[:topK]
 	}
 
 	return results, nil
+}
+
+func normalizeFTSScore(rank float64) float64 {
+	if rank <= 0 {
+		return 0
+	}
+	return 1 / (1 + rank) // simple inversion
 }

@@ -16,5 +16,9 @@ type EmbeddingSearchResult struct {
 
 type SearchResult struct {
 	Command string
-	Score   float64
+
+	SemanticScore float64
+	FTSScore      float64
+
+	FinalScore float64
 }

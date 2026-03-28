@@ -10,3 +10,8 @@ type HybridSearchResult struct {
 	Score         float64 `gorm:"-"`
 	FuzzyScore    int     `gorm:"-"`
 }
+
+type FTSResult struct {
+	Command string
+	Rank    float64
+}
