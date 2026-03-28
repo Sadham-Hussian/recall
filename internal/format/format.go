@@ -55,3 +55,20 @@ func Truncate(s string, max int) string {
 
 	return string(runes[:max-3]) + "..."
 }
+
+func NormalizeCommand(cmd string) string {
+	// 1. Remove actual newlines + carriage returns
+	cmd = strings.ReplaceAll(cmd, "\n", "")
+	cmd = strings.ReplaceAll(cmd, "\r", "")
+
+	// 2. Remove escaped newline literals (\n)
+	cmd = strings.ReplaceAll(cmd, "\\n", "")
+
+	// 3. Trim spaces
+	cmd = strings.TrimSpace(cmd)
+
+	// 4. Collapse multiple spaces (optional but recommended)
+	cmd = strings.Join(strings.Fields(cmd), " ")
+
+	return cmd
+}

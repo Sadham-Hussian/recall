@@ -3,11 +3,11 @@ package command_execution
 import (
 	"errors"
 	"fmt"
+	"recall/internal/format"
 	"recall/internal/shell"
 	"recall/internal/storage"
 	"recall/internal/storage/models"
 	"recall/internal/storage/repositories"
-	"strings"
 )
 
 type CommandExecutionService struct {
@@ -48,7 +48,7 @@ func (s *CommandExecutionService) RecordLiveCommandExecution(cmdStr string,
 	timestamp int64, cwd string, exitCode int, shellPID int, sessionID string) (*models.CommandExecution, error) {
 
 	execution := &models.CommandExecution{
-		Command:   strings.TrimSpace(cmdStr),
+		Command:   format.NormalizeCommand(cmdStr),
 		Timestamp: timestamp,
 		CWD:       cwd,
 		ExitCode:  exitCode,
@@ -103,7 +103,7 @@ func (s *CommandExecutionService) RecordCommandHistory() (int, error) {
 	for _, e := range entries {
 
 		commandExecutionModel := &models.CommandExecution{
-			Command:   e.Command,
+			Command:   format.NormalizeCommand(e.Command),
 			Timestamp: e.Timestamp.Unix(),
 			CWD:       "", // unknown from history file
 			ExitCode:  0,  // unknown
