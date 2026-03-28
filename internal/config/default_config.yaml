@@ -13,6 +13,8 @@ search:
   default_search_limit: 100
   fuzzy_search_limit: 500
   suggestion_limit: 10
+  fts_search_limit: 100
+  semantic_candidate_limit: 10000
 
 session:
   gap_seconds: 600

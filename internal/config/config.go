@@ -27,10 +27,12 @@ type Config struct {
 	} `mapstructure:"database"`
 
 	Search struct {
-		TopK               int `mapstructure:"top_k"`
-		DefaultSearchLimit int `mapstructure:"default_search_limit"`
-		FuzzySearchLimit   int `mapstructure:"fuzzy_search_limit"`
-		SuggestionLimit    int `mapstructure:"suggestion_limit"`
+		TopK                   int `mapstructure:"top_k"`
+		DefaultSearchLimit     int `mapstructure:"default_search_limit"`
+		FuzzySearchLimit       int `mapstructure:"fuzzy_search_limit"`
+		SuggestionLimit        int `mapstructure:"suggestion_limit"`
+		FTSSearchLimit         int `mapstructure:"fts_search_limit"`
+		SemanticCandidateLimit int `mapstructure:"semantic_candidate_limit"`
 	} `mapstructure:"search"`
 
 	Session struct {
