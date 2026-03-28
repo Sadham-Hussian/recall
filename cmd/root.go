@@ -25,8 +25,9 @@ func init() {
 	rootCmd.AddCommand(setup.GetUninstallCmd())
 	rootCmd.AddCommand(setup.GetMigrateCmd())
 	rootCmd.AddCommand(setup.GetVersionCmd())
-	rootCmd.AddCommand(setup.GetInitCmd())
+	rootCmd.AddCommand(setup.GetHookCmd())
 	rootCmd.AddCommand(setup.GetConfigCmd())
+	rootCmd.AddCommand(setup.GetInitCmd())
 
 	rootCmd.AddCommand(record.GetHistoryCmd())
 	rootCmd.AddCommand(record.GetRecordCmd())

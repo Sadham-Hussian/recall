@@ -2,163 +2,60 @@ package setup
 
 import (
 	"fmt"
-	"strings"
+	"recall/internal/config"
+	"recall/internal/storage"
 
 	"github.com/spf13/cobra"
 )
 
 var initCmd = &cobra.Command{
-	Use:   "init [shell]",
-	Short: "Initialize recall shell integration",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	Use:   "init",
+	Short: "Initialize Recall (config, database, migrations)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		fmt.Println("Initializing Recall...")
 
-		shell := strings.ToLower(args[0])
+		// 1. Load or create config
+		config.LoadConfig()
+		fmt.Println("✔ Config loaded")
 
-		switch shell {
-
-		case "zsh":
-			fmt.Print(zshHook())
-
-		case "bash":
-			fmt.Print(bashHook())
-
-		case "fish":
-			fmt.Print(fishHook())
-
-		default:
-			fmt.Println("Unsupported shell. Supported: zsh, bash, fish")
+		// 2. Resolve DB path
+		db, err := storage.NewDB()
+		if err != nil {
+			return fmt.Errorf("failed to create db: %w", err)
 		}
+
+		sqlDB, err := db.DB()
+		if err != nil {
+			return fmt.Errorf("failed to get db: %w", err)
+		}
+		sqlDB.Close()
+
+		fmt.Println("✔ Database connected")
+
+		// 7. Done + next steps
+		fmt.Println("\nRecall initialized successfully 🚀")
+
+		fmt.Println("Next steps:")
+
+		fmt.Println("1. Enable shell integration:")
+		fmt.Println(`   eval "$(recall hook zsh)"`)
+		fmt.Println()
+
+		fmt.Println("2. (Optional) Import history:")
+		fmt.Println("   recall history")
+		fmt.Println()
+
+		fmt.Println("3. (Optional) Generate embeddings:")
+		fmt.Println("   recall embed")
+		fmt.Println()
+
+		fmt.Println("4. Try it:")
+		fmt.Println(`   recall ask "find docker command"`)
+
+		return nil
 	},
 }
 
 func GetInitCmd() *cobra.Command {
 	return initCmd
-}
-
-func zshHook() string {
-	return `
-autoload -Uz add-zsh-hook
-
-recall_preexec() {
-  if [[ "$1" == recall* || "$1" == */recall* ]]; then
-    return
-  fi
-  export RECALL_LAST_COMMAND="$1"
-}
-
-recall_precmd() {
-  local exit_code=$?
-  local cwd="$PWD"
-  local timestamp=$(date +%s)
-
-  if [[ -n "$RECALL_LAST_TIMESTAMP" ]]; then
-    local gap=$((timestamp - RECALL_LAST_TIMESTAMP))
-    if [[ $gap -gt 600 ]]; then
-      export RECALL_SESSION_ID="$$-$timestamp"
-    fi
-  fi
-
-  if [[ -z "$RECALL_SESSION_ID" ]]; then
-    export RECALL_SESSION_ID="$$-$timestamp"
-  fi
-
-  if [[ -n "$RECALL_LAST_COMMAND" ]]; then
-    recall record \
-      --cmd "$RECALL_LAST_COMMAND" \
-      --exit "$exit_code" \
-      --cwd "$cwd" \
-      --ts "$timestamp" \
-      --shell-pid "$$" \
-      --session-id "$RECALL_SESSION_ID" \
-      >/dev/null 2>&1 &!
-
-    unset RECALL_LAST_COMMAND
-  fi
-
-  export RECALL_LAST_TIMESTAMP=$timestamp
-}
-
-add-zsh-hook preexec recall_preexec
-add-zsh-hook precmd recall_precmd
-`
-}
-
-func bashHook() string {
-	return `
-recall_preexec() {
-  export RECALL_LAST_COMMAND="$BASH_COMMAND"
-}
-
-recall_precmd() {
-  local exit_code=$?
-  local cwd="$PWD"
-  local timestamp=$(date +%s)
-
-  if [[ -n "$RECALL_LAST_TIMESTAMP" ]]; then
-    local gap=$((timestamp - RECALL_LAST_TIMESTAMP))
-    if [[ $gap -gt 600 ]]; then
-      export RECALL_SESSION_ID="$$-$timestamp"
-    fi
-  fi
-
-  if [[ -z "$RECALL_SESSION_ID" ]]; then
-    export RECALL_SESSION_ID="$$-$timestamp"
-  fi
-
-  if [[ -n "$RECALL_LAST_COMMAND" ]]; then
-    recall record \
-      --cmd "$RECALL_LAST_COMMAND" \
-      --exit "$exit_code" \
-      --cwd "$cwd" \
-      --ts "$timestamp" \
-      --shell-pid "$$" \
-      --session-id "$RECALL_SESSION_ID" \
-      >/dev/null 2>&1 &
-  fi
-
-  export RECALL_LAST_TIMESTAMP=$timestamp
-}
-
-trap 'recall_preexec' DEBUG
-PROMPT_COMMAND="recall_precmd;$PROMPT_COMMAND"
-`
-}
-
-func fishHook() string {
-	return `
-function recall_preexec --on-event fish_preexec
-    set -gx RECALL_LAST_COMMAND $argv
-end
-
-function recall_precmd --on-event fish_prompt
-    set exit_code $status
-    set cwd (pwd)
-    set timestamp (date +%s)
-
-    if test -n "$RECALL_LAST_TIMESTAMP"
-        set gap (math $timestamp - $RECALL_LAST_TIMESTAMP)
-        if test $gap -gt 600
-            set -gx RECALL_SESSION_ID "$fish_pid-$timestamp"
-        end
-    end
-
-    if test -z "$RECALL_SESSION_ID"
-        set -gx RECALL_SESSION_ID "$fish_pid-$timestamp"
-    end
-
-    if test -n "$RECALL_LAST_COMMAND"
-        recall record \
-            --cmd "$RECALL_LAST_COMMAND" \
-            --exit "$exit_code" \
-            --cwd "$cwd" \
-            --ts "$timestamp" \
-            --shell-pid "$fish_pid" \
-            --session-id "$RECALL_SESSION_ID" \
-            >/dev/null 2>&1 &
-    end
-
-    set -gx RECALL_LAST_TIMESTAMP $timestamp
-end
-`
 }

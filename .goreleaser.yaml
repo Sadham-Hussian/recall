@@ -6,6 +6,7 @@ builds:
   - binary: recall
     goos:
       - darwin
+      - linux
     goarch:
       - amd64
       - arm64
@@ -15,7 +16,7 @@ builds:
       - CGO_ENABLED=1
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
 
 checksum:
   name_template: "checksums.txt"

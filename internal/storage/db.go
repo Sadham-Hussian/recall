@@ -9,6 +9,7 @@ import (
 
 	gormSqlite "gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite"
@@ -57,7 +58,9 @@ func NewDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	db, err := gorm.Open(gormSqlite.Open(path), &gorm.Config{})
+	db, err := gorm.Open(gormSqlite.Open(path), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		return nil, err
 	}
