@@ -14,9 +14,9 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            build_id: recall-linux
+            skip: recall-darwin
           - os: macos-latest
-            build_id: recall-darwin
+            skip: recall-linux
 
     runs-on: ${{ matrix.os }}
 
@@ -31,7 +31,6 @@ jobs:
         with:
           go-version: "1.24"
 
-      # Required for CGO on Linux
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y gcc
@@ -40,6 +39,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.0.0
-          args: release --clean --id ${{ matrix.build_id }}
+          args: release --clean --skip ${{ matrix.skip }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

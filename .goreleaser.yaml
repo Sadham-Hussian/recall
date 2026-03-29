@@ -5,10 +5,8 @@ project_name: recall
 builds:
   - id: recall-linux
     binary: recall
-    goos:
-      - linux
-    goarch:
-      - amd64
+    goos: [linux]
+    goarch: [amd64]
     env:
       - CGO_ENABLED=1
     tags:
@@ -16,11 +14,8 @@ builds:
 
   - id: recall-darwin
     binary: recall
-    goos:
-      - darwin
-    goarch:
-      - amd64
-      - arm64
+    goos: [darwin]
+    goarch: [amd64, arm64]
     env:
       - CGO_ENABLED=1
     tags:
