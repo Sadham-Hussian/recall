@@ -39,7 +39,9 @@ jobs:
         if: matrix.arm == true
         uses: docker/setup-qemu-action@v3
 
-      - name: Install dependencies
+      # ✅ FIX: only run on Ubuntu
+      - name: Install dependencies (Linux only)
+        if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y gcc
 
       - name: Run GoReleaser
