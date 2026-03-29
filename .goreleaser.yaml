@@ -3,7 +3,8 @@ version: 2
 project_name: recall
 
 builds:
-  - binary: recall
+  - id: recall-darwin
+    binary: recall
     goos:
       - darwin
     goarch:
@@ -14,7 +15,8 @@ builds:
     env:
       - CGO_ENABLED=1
 
-  - binary: recall
+  - id: recall-linux
+    binary: recall
     goos:
       - linux
     goarch:
