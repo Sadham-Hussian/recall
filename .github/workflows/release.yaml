@@ -9,50 +9,60 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            config: .goreleaser.linux.yaml
-            publish: false
-          - os: macos-latest
-            config: .goreleaser.darwin.yaml
-            publish: true
-
-    runs-on: ${{ matrix.os }}
+  build-linux:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: "1.24"
 
-      - name: Install dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y gcc
 
-      # 👇 Linux: build only, no publish
-      - name: Run GoReleaser (build only)
-        if: matrix.publish == false
+      - name: Build Linux artifacts
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.0.0
-          args: release --clean --skip publish --config ${{ matrix.config }}
+          args: release --clean --skip publish --config .goreleaser.linux.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 👇 macOS: full release (publishes everything)
-      - name: Run GoReleaser (publish)
-        if: matrix.publish == true
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: dist/*
+
+---
+
+  release:
+    needs: build-linux
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-artifacts
+          path: dist
+
+      - name: Build + Publish (mac + all artifacts)
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.0.0
-          args: release --clean --config ${{ matrix.config }}
+          args: release --clean --config .goreleaser.darwin.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
