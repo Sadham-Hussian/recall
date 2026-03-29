@@ -6,6 +6,16 @@ builds:
   - binary: recall
     goos:
       - darwin
+    goarch:
+      - amd64
+      - arm64
+    tags:
+      - sqlite_fts5
+    env:
+      - CGO_ENABLED=1
+
+  - binary: recall
+    goos:
       - linux
     goarch:
       - amd64
