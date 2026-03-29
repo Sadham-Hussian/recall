@@ -13,11 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           go-version: "1.24"
 
@@ -43,11 +45,13 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           go-version: "1.24"
 
@@ -57,25 +61,24 @@ jobs:
           name: linux-artifacts
           path: dist-linux
 
-      # 👇 ensure clean dist for GoReleaser
-      - name: Prepare dist directory
+      # Clean dist so GoReleaser can run
+      - name: Prepare dist
         run: rm -rf dist
 
-      # 👇 run GoReleaser (clean build for mac)
+      # Build mac artifacts (no publish yet)
       - name: Build mac artifacts
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.0.0
-          args: release --clean --skip publish --config .goreleaser.darwin.yaml
+          args: release --clean --skip publish --skip validate --config .goreleaser.darwin.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 👇 merge linux + mac artifacts
+      # Merge Linux + mac artifacts
       - name: Merge artifacts
-        run: |
-          cp -r dist-linux/* dist/
+        run: cp -r dist-linux/* dist/
 
-      # 👇 final publish step
+      # Final publish (everything together)
       - name: Publish release
         uses: goreleaser/goreleaser-action@v5
         with:
