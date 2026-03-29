@@ -3,10 +3,20 @@ version: 2
 project_name: recall
 
 builds:
-  - id: recall
+  - id: recall-linux
     binary: recall
     goos:
       - linux
+    goarch:
+      - amd64
+    env:
+      - CGO_ENABLED=1
+    tags:
+      - sqlite_fts5
+
+  - id: recall-darwin
+    binary: recall
+    goos:
       - darwin
     goarch:
       - amd64
@@ -16,20 +26,14 @@ builds:
     tags:
       - sqlite_fts5
 
-    # 👇 key part
-    hooks:
-      pre: echo "Building for $GOOS"
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
 
-    # 👇 filter by GOOS from CI
-    skip: "{{ ne .Os .Env.GOOS }}"
+checksum:
+  name_template: "checksums.txt"
 
-    # 👇 important: build only for current OS
-    ignore:
-      - goos: darwin
-        goarch: amd64
-        # handled in mac job
-      - goos: darwin
-        goarch: arm64
-      - goos: linux
-        goarch: amd64
-        # handled in linux job
+release:
+  github:
+    owner: Sadham-Hussian
+    name: recall

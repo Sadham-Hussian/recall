@@ -12,7 +12,11 @@ jobs:
   release:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            build_id: recall-linux
+          - os: macos-latest
+            build_id: recall-darwin
 
     runs-on: ${{ matrix.os }}
 
@@ -27,6 +31,7 @@ jobs:
         with:
           go-version: "1.24"
 
+      # Required for CGO on Linux
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y gcc
@@ -35,7 +40,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.0.0
-          args: release --clean
+          args: release --clean --id ${{ matrix.build_id }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOOS: ${{ matrix.os == 'ubuntu-latest' && 'linux' || 'darwin' }}
