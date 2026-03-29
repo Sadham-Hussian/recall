@@ -38,8 +38,6 @@ jobs:
           name: linux-artifacts
           path: dist/*
 
----
-
   release:
     needs: build-linux
     runs-on: macos-latest
