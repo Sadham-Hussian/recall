@@ -1,36 +1,93 @@
 # Recall
 
-Recall is a local-first Go CLI that remembers what you ran in the terminal so you can search, replay, and reuse it later.
+Recall is an AI-powered, local-first terminal CLI that turns your shell history into a searchable memory and retrieval layer.
 
-It records shell commands into SQLite, indexes them with FTS5 for fast lookup, groups them into sessions, learns common command sequences, and can optionally add semantic search with Ollama embeddings.
+Today, Recall records commands, groups them into sessions, learns command sequences, and optionally adds semantic retrieval with Ollama embeddings. Over time, the goal is to evolve Recall into a deeper AI-native terminal workflow system with chat, intent detection, reasoning, and smarter command assistance.
+
+## Installation
+
+### macOS
+
+For both Apple Silicon and Intel macOS:
+
+```bash
+brew install Sadham-Hussian/recall/recall
+```
+
+### Linux
+
+Linux install currently supports `amd64` only:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/Sadham-Hussian/recall/master/install.sh | bash
+```
+
+### Build from source
+
+#### Prerequisites
+
+- Go `1.24.1` or newer
+- SQLite FTS5 support via the provided build tag
+- Optional: Ollama if you want semantic retrieval
+
+#### Build
+
+```bash
+make install
+```
+
+## Positioning
+
+If terminal history is raw logs, Recall is the beginning of a memory layer for terminal work.
+
+You can think of v1 as:
+
+- terminal memory for developers
+- a local RAG-style retrieval layer for shell workflows
+- an AI-powered command recall tool
+- a foundation for future terminal chat and reasoning workflows
 
 ## Why Recall
 
 Terminal history is useful, but it is usually:
 
 - tied to a single shell history file
-- hard to search when you only remember intent, not exact syntax
-- bad at showing workflows instead of isolated commands
-- not great at helping you resume interrupted work
+- hard to search when you remember intent but not exact syntax
+- weak at showing workflows instead of isolated commands
+- not designed to help resume interrupted work
+- not built as a retrieval layer for AI-assisted tooling
 
-Recall is an attempt to make command history feel more like memory.
+Recall is an attempt to fix that by making command history structured, searchable, contextual, and eventually AI-native.
 
 ## What v1 Can Do
 
 - Automatically record commands from `zsh`, `bash`, and `fish`
-- Import existing shell history into a local SQLite database
-- Search command history with SQLite FTS5
+- Import existing shell history
+- Search command history
 - Fall back to fuzzy matching when exact search misses
 - Rank results using frequency, recency, success rate, cwd/project context, and session context
 - Group commands into sessions
 - Replay previous sessions
 - Suggest likely next commands based on historical command chains
 - Run semantic command search with Ollama embeddings
-- Run a `doctor` command to validate local setup
 
-## How It Works
+## What Recall Is Becoming
 
-Recall stores command executions in SQLite and creates a full-text search index for fast keyword search.
+The long-term direction for Recall is larger than command history search.
+
+The vision is to turn Recall into an AI-powered terminal layer that can:
+
+- understand user intent instead of relying only on exact command matches
+- use retrieval over terminal history and workflows as context
+- support chat-based interaction on top of local command memory
+- reason about next steps in a terminal session
+- become a practical bridge between raw shell usage and LLM-assisted execution
+
+That future is not fully shipped yet, but v1 already includes the core pieces that make that direction possible: structured command storage, retrieval, sessions, command chains, and embeddings.
+
+## How It Works Today
+
+Recall stores command executions in SQLite and creates a full-text search index for fast keyword retrieval.
 
 Each recorded command can also:
 
@@ -43,47 +100,7 @@ When embeddings are enabled, Recall uses Ollama to generate vectors for commands
 - `recall ask "find docker cleanup command"`
 - `recall ask "how did I port-forward kubernetes service"`
 
-## Tech Stack
-
-- Go
-- Cobra CLI
-- SQLite
-- SQLite FTS5
-- GORM
-- Ollama for local embeddings
-
-## Project Structure
-
-```text
-cmd/                    Cobra commands
-internal/config/        config loading and default config
-internal/storage/       database setup, migrations, repositories, models
-internal/services/      application services for recording, search, sessions, embeddings
-internal/search/        hybrid ranking and FTS query helpers
-internal/embedding/     embedding client and similarity helpers
-internal/shell/         shell detection and history import
-```
-
-## Installation
-
-### Prerequisites
-
-- Go `1.24.1` or newer
-- SQLite FTS5 support via the provided build tag
-- Optional: Ollama if you want semantic search
-
-### Build
-
-```bash
-go build -tags sqlite_fts5 -o recall .
-```
-
-### Optional install to a global path
-
-```bash
-make build
-sudo mv recall /usr/local/bin/recall
-```
+In other words, v1 already behaves like a lightweight local retrieval system for terminal actions.
 
 ## Quick Start
 
@@ -132,7 +149,14 @@ recall list --limit 20
 recall last
 ```
 
-### 5. Explore sessions
+### 5. Use semantic retrieval
+
+```bash
+recall ask "find the command I used to tail docker logs"
+recall ask "how did I port forward postgres"
+```
+
+### 6. Explore sessions and workflow memory
 
 ```bash
 recall session
@@ -141,9 +165,9 @@ recall session replay <session_id>
 recall continue
 ```
 
-## Semantic Search With Ollama
+## Semantic Retrieval With Ollama
 
-Semantic search is optional and disabled by default.
+Semantic retrieval is optional and disabled by default.
 
 ### 1. Start Ollama
 
@@ -170,13 +194,17 @@ embedding:
   ollama_http_timeout_in_sec: 10
 ```
 
-### 4. Process the embedding queue
+### 4. Process the embedding queue manually
 
 ```bash
 recall embed
 ```
 
-### 5. Ask by intent
+In v1, embedding generation is a manual step. The current flow is to record commands first and then run `recall embed` when you want to process the pending embedding queue.
+
+Later, Recall will likely move this into a background daemon or worker so embeddings can be processed automatically.
+
+### 5. Query by intent
 
 ```bash
 recall ask "find the command I used to tail docker logs"
@@ -199,13 +227,14 @@ recall ask "how did I port forward postgres"
 - `recall history` - import shell history into the database
 - `recall record` - internal hidden command used by shell hooks
 
-### Querying
+### Querying and retrieval
 
 - `recall last` - show the most recent command
 - `recall list` - list recent commands
 - `recall search <query>` - keyword/full-text search with ranking
 - `recall suggest <command>` - suggest likely next commands
 - `recall ask <query>` - semantic search using embeddings
+- `recall embed` - manually process the embedding queue
 
 ### Sessions
 
@@ -242,61 +271,26 @@ processor:
   batch_size: 5000
 ```
 
-## Example Workflows
-
-### Find and rerun a command
-
-```bash
-recall search "kubectl port-forward" --interactive
-```
-
-### Recover a past workflow
-
-```bash
-recall session --last 3
-recall session replay <session_id>
-```
-
-### Resume a likely next step
-
-```bash
-recall continue
-```
-
-## Doctor Checks
-
-`recall doctor` verifies:
-
-- config loads correctly
-- database connection works
-- required tables exist
-- Ollama is reachable when embeddings are enabled
-- the configured embedding model is available
-
 ## v1 Notes
 
-This is a version 1 release. It is already useful for personal command recall, but it is still early.
+This is a version 1 release.
+
+Recall already works as a useful local retrieval system for terminal commands and workflows, but the bigger AI-native product direction is still ahead.
 
 Current constraints to be aware of:
 
-- semantic search currently supports Ollama only
+- semantic retrieval currently supports Ollama only
+- embedding generation is manual via `recall embed` in v1
+- chat, explicit reasoning, and richer LLM intent detection are future-facing, not fully shipped in v1
 - command execution features are interactive and intended for trusted local usage
 - imported shell history may not include cwd or exit code metadata
 - ranking and session heuristics are practical, but still evolving
-- docs and command UX will keep improving as the project matures
 
-## Development
+## 👤 Who is this for
 
-```bash
-make build
-make run
-```
-
-Build verification used for this repo:
-
-```bash
-go build -tags sqlite_fts5 ./...
-```
+- Developers working heavily in terminal
+- DevOps / SRE workflows
+- Anyone tired of searching shell history
 
 ## License
 
