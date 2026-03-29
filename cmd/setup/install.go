@@ -24,15 +24,15 @@ var installCmd = &cobra.Command{
 
 		case "zsh":
 			rcFile = filepath.Join(home, ".zshrc")
-			command = `eval "$(recall init zsh)"`
+			command = `eval "$(recall hook zsh)"`
 
 		case "bash":
 			rcFile = filepath.Join(home, ".bashrc")
-			command = `eval "$(recall init bash)"`
+			command = `eval "$(recall hook bash)"`
 
 		case "fish":
 			rcFile = filepath.Join(home, ".config/fish/config.fish")
-			command = `recall init fish | source`
+			command = `recall hook fish | source`
 
 		default:
 			fmt.Println("Could not detect your shell.")
