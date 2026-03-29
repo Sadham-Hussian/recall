@@ -3,17 +3,7 @@ version: 2
 project_name: recall
 
 builds:
-  - id: recall-linux
-    binary: recall
-    goos: [linux]
-    goarch: [amd64]
-    env:
-      - CGO_ENABLED=1
-    tags:
-      - sqlite_fts5
-
-  - id: recall-darwin
-    binary: recall
+  - binary: recall
     goos: [darwin]
     goarch: [amd64, arm64]
     env:
@@ -23,7 +13,7 @@ builds:
 
 archives:
   - format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .ProjectName }}_darwin_{{ .Arch }}"
 
 checksum:
   name_template: "checksums.txt"

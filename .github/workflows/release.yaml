@@ -14,9 +14,9 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            skip: recall-darwin
+            config: .goreleaser.linux.yaml
           - os: macos-latest
-            skip: recall-linux
+            config: .goreleaser.darwin.yaml
 
     runs-on: ${{ matrix.os }}
 
@@ -39,6 +39,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.0.0
-          args: release --clean --skip ${{ matrix.skip }}
+          args: release --clean --config ${{ matrix.config }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
