@@ -15,8 +15,8 @@ archives:
   - format: tar.gz
     name_template: "{{ .ProjectName }}_linux_{{ .Arch }}"
 
-checksum:
-  name_template: "checksums.txt"
+# checksum:
+#   name_template: "checksums.txt"
 
 release:
   github:
