@@ -5,7 +5,7 @@ project_name: recall
 builds:
   - binary: recall
     goos: [linux]
-    goarch: [amd64]
+    goarch: [amd64, arm64]
     env:
       - CGO_ENABLED=1
     tags:
