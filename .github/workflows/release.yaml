@@ -14,25 +14,32 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            config: .goreleaser.linux.yaml
+            config: .goreleaser.linux-amd64.yaml
+
+          - os: ubuntu-latest
+            config: .goreleaser.linux-arm64.yaml
+            arm: true
+
           - os: macos-latest
             config: .goreleaser.darwin.yaml
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: "1.24"
 
-      - name: Install dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      # 👇 enable ARM emulation
+      - name: Set up QEMU
+        if: matrix.arm == true
+        uses: docker/setup-qemu-action@v3
+
+      - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y gcc
 
       - name: Run GoReleaser
