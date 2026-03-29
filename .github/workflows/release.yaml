@@ -15,8 +15,10 @@ jobs:
         include:
           - os: ubuntu-latest
             config: .goreleaser.linux.yaml
+            publish: false
           - os: macos-latest
             config: .goreleaser.darwin.yaml
+            publish: true
 
     runs-on: ${{ matrix.os }}
 
@@ -35,7 +37,19 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y gcc
 
-      - name: Run GoReleaser
+      # 👇 Linux: build only, no publish
+      - name: Run GoReleaser (build only)
+        if: matrix.publish == false
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: v2.0.0
+          args: release --clean --skip publish --config ${{ matrix.config }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 👇 macOS: full release (publishes everything)
+      - name: Run GoReleaser (publish)
+        if: matrix.publish == true
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.0.0
