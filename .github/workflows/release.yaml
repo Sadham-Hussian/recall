@@ -13,11 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           go-version: "1.24"
 
@@ -43,11 +45,13 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           go-version: "1.24"
 
@@ -57,10 +61,11 @@ jobs:
           name: linux-artifacts
           path: dist
 
+      # 🚨 IMPORTANT: NO --clean here
       - name: Build + Publish (mac + all artifacts)
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.0.0
-          args: release --clean --config .goreleaser.darwin.yaml
+          args: release --config .goreleaser.darwin.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
