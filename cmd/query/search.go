@@ -168,8 +168,6 @@ func interactiveCommandPicker(results []models.HybridSearchResult) {
 		fmt.Println("Command failed:", err)
 	}
 
-	return
-
 }
 
 func GetSearchCmd() *cobra.Command {
