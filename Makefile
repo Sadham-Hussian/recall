@@ -15,5 +15,9 @@ uninstall:
 	@echo "Removing $(BINARY_NAME)"
 	sudo rm -f $(INSTALL_PATH)/$(BINARY_NAME)
 
+test:
+	go clean -testcache
+	go test -tags "$(BUILD_TAGS)" ./internal/...
+
 run:
 	go run -tags "$(BUILD_TAGS)" main.go
