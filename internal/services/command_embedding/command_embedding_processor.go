@@ -92,6 +92,14 @@ func (p *CommandEmbeddingProcessor) Process(batchSize int) error {
 	return nil
 }
 
+func (p *CommandEmbeddingProcessor) HasPendingEmbeddings() (bool, error) {
+	count, err := p.CommandEmbeddingQueueRepo.CountQueue()
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (s *CommandEmbeddingProcessor) Search(query string, topK int, ftsSearchLimit, embeddingCandidateLimit int) ([]models.SearchResult, error) {
 	// 1. Embed query
 	queryVec, err := s.Embedder.Embed(query)

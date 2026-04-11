@@ -21,3 +21,7 @@ session:
 
 processor:
   batch_size: 5000
+
+daemon:
+  poll_interval_seconds: 30
+

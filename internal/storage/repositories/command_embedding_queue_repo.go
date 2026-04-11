@@ -1,6 +1,8 @@
 package repositories
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type CommandEmbeddingQueueRepository struct {
 	db *gorm.DB
@@ -26,4 +28,10 @@ func (r *CommandEmbeddingQueueRepository) DeleteFromQueue(ids []int64) error {
 		DELETE FROM embedding_queue
 		WHERE command_execution_id IN ?
 	`, ids).Error
+}
+
+func (r *CommandEmbeddingQueueRepository) CountQueue() (int64, error) {
+	var count int64
+	err := r.db.Raw(`SELECT COUNT(*) FROM embedding_queue`).Scan(&count).Error
+	return count, err
 }

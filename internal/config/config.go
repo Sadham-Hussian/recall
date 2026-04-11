@@ -42,6 +42,10 @@ type Config struct {
 	Processor struct {
 		BatchSize int `mapstructure:"batch_size"`
 	} `mapstructure:"processor"`
+
+	Daemon struct {
+		PollIntervalSeconds int `mapstructure:"poll_interval_seconds"`
+	} `mapstructure:"daemon"`
 }
 
 var AppConfig *Config
@@ -126,6 +130,28 @@ func ensureConfigFile() (string, error) {
 	}
 
 	return path, nil
+}
+
+func ReloadConfig() (*Config, error) {
+	path, err := getUserConfigPath()
+	if err != nil {
+		return AppConfig, err
+	}
+
+	viper.SetConfigFile(path)
+	viper.SetConfigType("yaml")
+
+	if err := viper.ReadInConfig(); err != nil {
+		return AppConfig, err
+	}
+
+	var cfg Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return AppConfig, err
+	}
+
+	AppConfig = &cfg
+	return AppConfig, nil
 }
 
 func GetUserConfigPath() (string, error) {

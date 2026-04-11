@@ -45,8 +45,8 @@ var initCmd = &cobra.Command{
 		fmt.Println("   recall history")
 		fmt.Println()
 
-		fmt.Println("3. (Optional) Generate embeddings:")
-		fmt.Println("   recall embed")
+		fmt.Println("3. (Optional) Enable background embeddings:")
+		fmt.Println("   recall daemon install")
 		fmt.Println()
 
 		fmt.Println("4. Try it:")
