@@ -11,6 +11,7 @@ import (
 	"recall/cmd/record"
 	"recall/cmd/session"
 	"recall/cmd/setup"
+	"recall/cmd/workflow"
 
 	"github.com/spf13/cobra"
 )
@@ -48,6 +49,8 @@ func init() {
 	rootCmd.AddCommand(doctor.GetDoctorCmd())
 
 	rootCmd.AddCommand(daemon.GetDaemonCmd())
+
+	rootCmd.AddCommand(workflow.GetWorkflowCmd())
 }
 
 func Execute() error {
