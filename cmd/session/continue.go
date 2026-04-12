@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"recall/internal/config"
+	"recall/internal/executor"
 	"recall/internal/services/session"
 
 	"github.com/spf13/cobra"
@@ -54,7 +55,7 @@ var continueCmd = &cobra.Command{
 		fmt.Println()
 		fmt.Println("Executing:", suggestion.NextCommand)
 
-		err = runCommand(suggestion.NextCommand)
+		err = executor.RunCommand(suggestion.NextCommand)
 		if err != nil {
 			fmt.Println("Command failed:", err)
 		}

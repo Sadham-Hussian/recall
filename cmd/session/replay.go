@@ -3,13 +3,11 @@ package session
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/exec"
 	"recall/internal/config"
+	"recall/internal/executor"
 	"recall/internal/services/session"
 	"recall/internal/storage/models"
 
-	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -45,13 +43,13 @@ var replayCmd = &cobra.Command{
 		switch mode {
 
 		case 1:
-			runAll(commands)
+			executor.RunAll(toStrings(commands))
 
 		case 2:
-			runStepByStep(commands)
+			executor.RunStepByStep(toStrings(commands))
 
 		case 3:
-			runInteractive(commands)
+			executor.RunInteractive(toStrings(commands))
 
 		default:
 			fmt.Println("Exiting.")
@@ -91,87 +89,10 @@ func askExecutionMode() int {
 	return choice
 }
 
-func runAll(commands []models.CommandExecution) {
-
-	for _, c := range commands {
-
-		fmt.Println()
-		fmt.Println("Executing:", c.Command)
-
-		err := runCommand(c.Command)
-		if err != nil {
-			fmt.Println("Command failed:", err)
-			return
-		}
-	}
-}
-
-func runStepByStep(commands []models.CommandExecution) {
-
-	for _, c := range commands {
-
-		fmt.Printf("\nRun command: %s ? (y/n/exit): ", c.Command)
-
-		var input string
-		fmt.Scanln(&input)
-
-		switch input {
-
-		case "y":
-			fmt.Println("Executing:", c.Command)
-			err := runCommand(c.Command)
-			if err != nil {
-				fmt.Println("Command failed:", err)
-			}
-
-		case "exit":
-			fmt.Println("Exiting replay.")
-			return
-		}
-	}
-}
-
-func runInteractive(commands []models.CommandExecution) {
-
-	items := make([]string, len(commands))
-
+func toStrings(commands []models.CommandExecution) []string {
+	s := make([]string, len(commands))
 	for i, c := range commands {
-		items[i] = c.Command
+		s[i] = c.Command
 	}
-
-	for {
-
-		prompt := promptui.Select{
-			Label: "Select command to execute (Ctrl+C to exit)",
-			Items: items,
-			Size:  10,
-		}
-
-		index, _, err := prompt.Run()
-		if err != nil {
-			fmt.Println("Exiting interactive mode.")
-			return
-		}
-
-		command := items[index]
-
-		fmt.Println()
-		fmt.Println("Executing:", command)
-
-		err = runCommand(command)
-		if err != nil {
-			fmt.Println("Command failed:", err)
-		}
-	}
-}
-
-func runCommand(command string) error {
-
-	cmd := exec.Command("sh", "-c", command)
-
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
+	return s
 }
