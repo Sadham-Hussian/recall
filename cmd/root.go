@@ -11,7 +11,10 @@ import (
 	"recall/cmd/record"
 	"recall/cmd/session"
 	"recall/cmd/setup"
+	"recall/cmd/upgrade"
 	"recall/cmd/workflow"
+	"recall/internal/config"
+	upgradesvc "recall/internal/services/upgrade"
 
 	"github.com/spf13/cobra"
 )
@@ -51,6 +54,18 @@ func init() {
 	rootCmd.AddCommand(daemon.GetDaemonCmd())
 
 	rootCmd.AddCommand(workflow.GetWorkflowCmd())
+
+	rootCmd.AddCommand(upgrade.GetUpgradeCmd())
+
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		cfg := config.LoadConfig()
+		upgradesvc.MaybeCheckInBackground(cfg)
+		return nil
+	}
+	rootCmd.PersistentPostRunE = func(cmd *cobra.Command, args []string) error {
+		upgradesvc.PrintNoticeIfAvailable(config.AppConfig, setup.Version, topLevelName(cmd))
+		return nil
+	}
 }
 
 func Execute() error {
@@ -59,4 +74,17 @@ func Execute() error {
 	rootCmd.SetErr(os.Stderr)
 
 	return rootCmd.Execute()
+}
+
+// topLevelName returns the direct child of rootCmd in cmd's ancestor chain,
+// e.g. "daemon" for `recall daemon start`. If cmd is already a top-level
+// command, its own name is returned. Returns "" if cmd is the root.
+func topLevelName(cmd *cobra.Command) string {
+	for cmd != nil && cmd.Parent() != nil && cmd.Parent().Parent() != nil {
+		cmd = cmd.Parent()
+	}
+	if cmd == nil || cmd.Parent() == nil {
+		return ""
+	}
+	return cmd.Name()
 }

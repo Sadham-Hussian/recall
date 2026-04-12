@@ -10,6 +10,11 @@ builds:
       - CGO_ENABLED=1
     tags:
       - sqlite_fts5
+    ldflags:
+      - -s -w
+      - -X recall/cmd/setup.Version={{.Version}}
+      - -X recall/cmd/setup.Commit={{.Commit}}
+      - -X recall/cmd/setup.Date={{.Date}}
 
 archives:
   - format: tar.gz

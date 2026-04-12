@@ -25,3 +25,7 @@ processor:
 daemon:
   poll_interval_seconds: 30
 
+upgrade:
+  auto_check_enabled: true
+  check_interval_hours: 24
+

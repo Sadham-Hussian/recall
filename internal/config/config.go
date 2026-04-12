@@ -46,6 +46,11 @@ type Config struct {
 	Daemon struct {
 		PollIntervalSeconds int `mapstructure:"poll_interval_seconds"`
 	} `mapstructure:"daemon"`
+
+	Upgrade struct {
+		AutoCheckEnabled   bool `mapstructure:"auto_check_enabled"`
+		CheckIntervalHours int  `mapstructure:"check_interval_hours"`
+	} `mapstructure:"upgrade"`
 }
 
 var AppConfig *Config

@@ -6,13 +6,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "dev"
+var (
+	Version = "dev"
+	Commit  = "none"
+	Date    = "unknown"
+)
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print recall version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Fprintln(cmd.OutOrStdout(), version)
+		if Version == "dev" {
+			fmt.Fprintln(cmd.OutOrStdout(), "recall dev")
+			return
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "recall %s (commit %s, built %s)\n", Version, Commit, Date)
 	},
 }
 
