@@ -107,14 +107,14 @@ recall_precmd() {
   fi
 
   if [[ -n "$RECALL_LAST_COMMAND" ]]; then
-    recall record \
+    ( recall record \
       --cmd "$RECALL_LAST_COMMAND" \
       --exit "$exit_code" \
       --cwd "$cwd" \
       --ts "$timestamp" \
       --shell-pid "$$" \
       --session-id "$RECALL_SESSION_ID" \
-      >/dev/null 2>&1 &
+      >/dev/null 2>&1 & )
   fi
 
   export RECALL_LAST_TIMESTAMP=$timestamp
