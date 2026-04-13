@@ -57,12 +57,27 @@ func init() {
 
 	rootCmd.AddCommand(upgrade.GetUpgradeCmd())
 
+	// outputSensitiveCommands emit shell script to stdout that the user's shell
+	// eval's. They must produce no incidental output and must not trigger
+	// side effects like creating the default config file.
+	var outputSensitiveCommands = map[string]bool{
+		"hook":    true,
+		"install": true,
+	}
+
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if outputSensitiveCommands[topLevelName(cmd)] {
+			return nil
+		}
+
 		cfg := config.LoadConfig()
 		upgradesvc.MaybeCheckInBackground(cfg)
 		return nil
 	}
 	rootCmd.PersistentPostRunE = func(cmd *cobra.Command, args []string) error {
+		if outputSensitiveCommands[topLevelName(cmd)] {
+			return nil
+		}
 		upgradesvc.PrintNoticeIfAvailable(config.AppConfig, setup.Version, topLevelName(cmd))
 		return nil
 	}
