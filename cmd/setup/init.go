@@ -38,7 +38,16 @@ var initCmd = &cobra.Command{
 		fmt.Println("Next steps:")
 
 		fmt.Println("1. Enable shell integration:")
-		fmt.Println(`   eval "$(recall hook zsh)"`)
+		switch detectShell() {
+		case "zsh":
+			fmt.Println(`   eval "$(recall hook zsh)"`)
+		case "bash":
+			fmt.Println(`   eval "$(recall hook bash)"`)
+		case "fish":
+			fmt.Println(`   recall hook fish | source`)
+		default:
+			fmt.Println(`   eval "$(recall hook zsh)"   # or bash / fish`)
+		}
 		fmt.Println()
 
 		fmt.Println("2. (Optional) Import history:")
