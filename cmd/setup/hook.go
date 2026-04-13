@@ -87,6 +87,9 @@ add-zsh-hook precmd recall_precmd
 func bashHook() string {
 	return `
 recall_preexec() {
+  case "$BASH_COMMAND" in
+    recall*|*/recall*) return ;;
+  esac
   export RECALL_LAST_COMMAND="$BASH_COMMAND"
 }
 
@@ -115,6 +118,8 @@ recall_precmd() {
       --shell-pid "$$" \
       --session-id "$RECALL_SESSION_ID" \
       >/dev/null 2>&1 & )
+
+    unset RECALL_LAST_COMMAND
   fi
 
   export RECALL_LAST_TIMESTAMP=$timestamp
