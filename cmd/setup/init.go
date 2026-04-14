@@ -58,7 +58,20 @@ var initCmd = &cobra.Command{
 		fmt.Println("   recall daemon install")
 		fmt.Println()
 
-		fmt.Println("4. Try it:")
+		fmt.Println("4. (Optional) Enable tab completion:")
+		switch detectShell() {
+		case "zsh":
+			fmt.Println(`   recall completion zsh > "${fpath[1]}/_recall"`)
+		case "bash":
+			fmt.Println(`   recall completion bash | sudo tee /etc/bash_completion.d/recall`)
+		case "fish":
+			fmt.Println(`   recall completion fish > ~/.config/fish/completions/recall.fish`)
+		default:
+			fmt.Println(`   recall completion zsh > "${fpath[1]}/_recall"   # or bash / fish`)
+		}
+		fmt.Println()
+
+		fmt.Println("5. Try it:")
 		fmt.Println(`   recall ask "find docker command"`)
 
 		return nil

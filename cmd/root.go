@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"recall/cmd/ask"
+	"recall/cmd/completion"
 	"recall/cmd/daemon"
 	"recall/cmd/doctor"
 	"recall/cmd/embed"
@@ -81,6 +82,11 @@ func init() {
 		upgradesvc.PrintNoticeIfAvailable(config.AppConfig, setup.Version, topLevelName(cmd))
 		return nil
 	}
+
+	rootCmd.AddCommand(completion.GetCompletionCmd())
+
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+
 }
 
 func Execute() error {

@@ -9,9 +9,10 @@ import (
 )
 
 var deleteCmd = &cobra.Command{
-	Use:   "delete <name>",
-	Short: "Delete a workflow",
-	Args:  cobra.ExactArgs(1),
+	Use:               "delete <name>",
+	Short:             "Delete a workflow",
+	Args:              cobra.ExactArgs(1),
+	ValidArgsFunction: workflowNameCompletion,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		config.LoadConfig()
 		svc, err := workflow_svc.NewWorkflowService()
