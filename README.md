@@ -2,7 +2,7 @@
 
 Recall is an AI-powered, local-first terminal CLI that turns your shell history into a searchable memory and retrieval layer.
 
-Today, Recall records commands, groups them into sessions, learns command sequences, and optionally adds semantic retrieval with Ollama embeddings. Over time, the goal is to evolve Recall into a deeper AI-native terminal workflow system with chat, intent detection, reasoning, and smarter command assistance.
+Today, Recall records commands, groups them into sessions, learns command sequences, supports reusable workflows, and optionally adds semantic retrieval with Ollama embeddings. Over time, the goal is to evolve Recall into a deeper AI-native terminal workflow system with chat, intent detection, reasoning, and smarter command assistance.
 
 ## Installation
 
@@ -27,6 +27,7 @@ curl -sSL https://raw.githubusercontent.com/Sadham-Hussian/recall/master/install
 #### Prerequisites
 
 - Go `1.24.1` or newer
+- GCC (CGO is required for SQLite)
 - SQLite FTS5 support via the provided build tag
 - Optional: Ollama if you want semantic retrieval
 
@@ -35,6 +36,18 @@ curl -sSL https://raw.githubusercontent.com/Sadham-Hussian/recall/master/install
 ```bash
 make install
 ```
+
+### Upgrading
+
+**From v1.1.0 onwards:**
+
+```bash
+recall upgrade
+```
+
+**From v1.0.0 (one-time bootstrap):**
+
+Re-run your original install method — `install.sh`, `brew upgrade Sadham-Hussian/recall/recall`, or `git pull && make install`. After reaching v1.1.0, all future upgrades go through `recall upgrade`.
 
 ## Positioning
 
@@ -59,17 +72,19 @@ Terminal history is useful, but it is usually:
 
 Recall is an attempt to fix that by making command history structured, searchable, contextual, and eventually AI-native.
 
-## What v1 Can Do
+## What Recall Can Do
 
 - Automatically record commands from `zsh`, `bash`, and `fish`
 - Import existing shell history
-- Search command history
-- Fall back to fuzzy matching when exact search misses
+- Search command history with full-text and fuzzy matching
 - Rank results using frequency, recency, success rate, cwd/project context, and session context
-- Group commands into sessions
-- Replay previous sessions
+- Group commands into sessions and replay them
 - Suggest likely next commands based on historical command chains
+- Save and run reusable command workflows
 - Run semantic command search with Ollama embeddings
+- Auto-process embeddings via a background daemon
+- Self-upgrade to the latest release
+- Tab-complete commands, subcommands, flags, and workflow names
 
 ## What Recall Is Becoming
 
@@ -165,6 +180,86 @@ recall session replay <session_id>
 recall continue
 ```
 
+### 7. Workflows
+
+Save recurring command sequences and replay them later:
+
+```bash
+# Interactive save — type commands one by one, type 'save' to finish
+recall workflow save deploy
+
+# Save from a session — pick commands by number
+recall workflow save debug --from-session <session_id>
+
+# List, show, run, delete
+recall workflow list
+recall workflow show deploy
+recall workflow run deploy
+recall workflow delete deploy
+```
+
+### 8. Shell completions (optional)
+
+Enable Tab-completion of `recall` subcommands, flags, and saved workflow names:
+
+**Zsh:**
+
+```zsh
+recall completion zsh > "${fpath[1]}/_recall"
+autoload -U compinit && compinit
+```
+
+**Bash:**
+
+```bash
+# Requires bash-completion package: apt install bash-completion (if not installed)
+mkdir -p ~/.local/share/bash-completion/completions
+recall completion bash > ~/.local/share/bash-completion/completions/recall
+```
+
+**Fish:**
+
+```fish
+recall completion fish > ~/.config/fish/completions/recall.fish
+```
+
+## Background Embedding Daemon
+
+When semantic retrieval is enabled, Recall can automatically process the embedding queue in the background via a daemon. This replaces the manual `recall embed` step.
+
+### Install as a system service
+
+```bash
+recall daemon install
+```
+
+This installs and starts a background service via launchd (macOS) or systemd (Linux). The daemon polls for unprocessed commands and generates embeddings automatically.
+
+### Manage the daemon
+
+```bash
+recall daemon status    # show service status
+recall daemon stop      # stop the service
+recall daemon start     # start the service
+recall daemon run       # run in foreground (for debugging)
+```
+
+Log file: `~/.recall/daemon.log`
+
+## Self-Update
+
+Recall checks for new releases in the background and prints a one-line notice when a newer version is available.
+
+```bash
+recall upgrade              # download, verify checksum, and swap binary
+recall upgrade --check      # check only, don't install
+recall upgrade -y           # skip confirmation
+```
+
+Homebrew users should use `brew upgrade Sadham-Hussian/recall/recall` instead.
+
+Set `auto_check_enabled: false` in `~/.recall/config.yaml` under `upgrade:` to disable the background version check.
+
 ## Semantic Retrieval With Ollama
 
 Semantic retrieval is optional and disabled by default.
@@ -194,15 +289,13 @@ embedding:
   ollama_http_timeout_in_sec: 10
 ```
 
-### 4. Process the embedding queue manually
+### 4. Process embeddings
+
+With the daemon running (`recall daemon install`), embeddings are processed automatically. Or process manually:
 
 ```bash
 recall embed
 ```
-
-In v1, embedding generation is a manual step. The current flow is to record commands first and then run `recall embed` when you want to process the pending embedding queue.
-
-Later, Recall will likely move this into a background daemon or worker so embeddings can be processed automatically.
 
 ### 5. Query by intent
 
@@ -217,10 +310,12 @@ recall ask "how did I port forward postgres"
 
 - `recall init` - initialize config, database, and migrations
 - `recall hook <shell>` - print shell integration script for `zsh`, `bash`, or `fish`
+- `recall install` - show instructions to enable shell integration
 - `recall config` - ensure the config file exists
 - `recall migrate` - run database migrations
 - `recall doctor` - run local health checks
 - `recall version` - print version
+- `recall completion <shell>` - generate shell completion script for `bash`, `zsh`, or `fish`
 
 ### Recording and history
 
@@ -242,6 +337,29 @@ recall ask "how did I port forward postgres"
 - `recall session --last <n>` - show the latest sessions
 - `recall session replay <session_id>` - replay a recorded session
 - `recall continue` - suggest the next command for the current shell workflow
+
+### Workflows
+
+- `recall workflow save <name>` - save a workflow (interactive or `--from-session <id>`)
+- `recall workflow list` - list all saved workflows
+- `recall workflow show <name>` - show steps in a workflow
+- `recall workflow run <name>` - execute a saved workflow
+- `recall workflow delete <name>` - delete a workflow
+
+### Daemon
+
+- `recall daemon install` - install and start as a system service (launchd/systemd)
+- `recall daemon start` - start the daemon service
+- `recall daemon stop` - stop the daemon service
+- `recall daemon status` - show daemon service status
+- `recall daemon run` - run the daemon in the foreground
+- `recall daemon log` - tail the daemon log
+
+### Upgrade
+
+- `recall upgrade` - upgrade to the latest release
+- `recall upgrade --check` - check for updates without installing
+- `recall upgrade -y` - upgrade without confirmation
 
 ## Default Config
 
@@ -269,24 +387,28 @@ session:
 
 processor:
   batch_size: 5000
+
+daemon:
+  poll_interval_seconds: 30
+
+upgrade:
+  auto_check_enabled: true
+  check_interval_hours: 24
 ```
 
-## v1 Notes
-
-This is a version 1 release.
+## Notes
 
 Recall already works as a useful local retrieval system for terminal commands and workflows, but the bigger AI-native product direction is still ahead.
 
 Current constraints to be aware of:
 
 - semantic retrieval currently supports Ollama only
-- embedding generation is manual via `recall embed` in v1
-- chat, explicit reasoning, and richer LLM intent detection are future-facing, not fully shipped in v1
+- chat, explicit reasoning, and richer LLM intent detection are future-facing
 - command execution features are interactive and intended for trusted local usage
 - imported shell history may not include cwd or exit code metadata
 - ranking and session heuristics are practical, but still evolving
 
-## 👤 Who is this for
+## Who is this for
 
 - Developers working heavily in terminal
 - DevOps / SRE workflows
