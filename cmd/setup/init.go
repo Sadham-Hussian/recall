@@ -63,7 +63,9 @@ var initCmd = &cobra.Command{
 		case "zsh":
 			fmt.Println(`   recall completion zsh > "${fpath[1]}/_recall"`)
 		case "bash":
-			fmt.Println(`   recall completion bash | sudo tee /etc/bash_completion.d/recall`)
+			fmt.Println(`   # Requires bash-completion: apt install bash-completion (if not installed)`)
+			fmt.Println(`   mkdir -p ~/.local/share/bash-completion/completions`)
+			fmt.Println(`   recall completion bash > ~/.local/share/bash-completion/completions/recall`)
 		case "fish":
 			fmt.Println(`   recall completion fish > ~/.config/fish/completions/recall.fish`)
 		default:

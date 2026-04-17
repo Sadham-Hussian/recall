@@ -14,8 +14,8 @@ var completionCmd = &cobra.Command{
 To load completions:
 
 Bash:
-  $ recall completion bash | sudo tee /etc/bash_completion.d/recall
-  # or, user-local:
+  # Requires bash-completion: apt install bash-completion (if not installed)
+  $ mkdir -p ~/.local/share/bash-completion/completions
   $ recall completion bash > ~/.local/share/bash-completion/completions/recall
 
 Zsh:
