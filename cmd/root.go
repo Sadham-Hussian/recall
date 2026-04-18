@@ -12,6 +12,7 @@ import (
 	"recall/cmd/record"
 	"recall/cmd/session"
 	"recall/cmd/setup"
+	"recall/cmd/stats"
 	"recall/cmd/upgrade"
 	"recall/cmd/workflow"
 	"recall/internal/config"
@@ -86,6 +87,8 @@ func init() {
 	rootCmd.AddCommand(completion.GetCompletionCmd())
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
+
+	rootCmd.AddCommand(stats.GetStatsCmd())
 
 }
 
