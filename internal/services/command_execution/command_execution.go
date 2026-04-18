@@ -3,7 +3,9 @@ package command_execution
 import (
 	"errors"
 	"fmt"
+	"recall/internal/config"
 	"recall/internal/format"
+	"recall/internal/services/ignore"
 	"recall/internal/shell"
 	"recall/internal/storage"
 	"recall/internal/storage/models"
@@ -44,8 +46,18 @@ func (s *CommandExecutionService) ListRecent(limit int) ([]models.CommandExecuti
 	return executions, nil
 }
 
-func (s *CommandExecutionService) RecordLiveCommandExecution(cmdStr string,
+func (s *CommandExecutionService) RecordLiveCommandExecution(cfg *config.Config, cmdStr string,
 	timestamp int64, cwd string, exitCode int, shellPID int, sessionID string) (*models.CommandExecution, error) {
+
+	normalized := format.NormalizeCommand(cmdStr)
+
+	// Check ignore patterns before any DB interaction
+	if cfg != nil {
+		matcher := ignore.NewMatcher(cfg)
+		if matcher.ShouldIgnore(normalized) {
+			return nil, nil
+		}
+	}
 
 	execution := &models.CommandExecution{
 		Command:   format.NormalizeCommand(cmdStr),

@@ -51,6 +51,11 @@ type Config struct {
 		AutoCheckEnabled   bool `mapstructure:"auto_check_enabled"`
 		CheckIntervalHours int  `mapstructure:"check_interval_hours"`
 	} `mapstructure:"upgrade"`
+
+	Ignore struct {
+		Commands []string `mapstructure:"commands"`
+		Patterns []string `mapstructure:"patterns"`
+	} `mapstructure:"ignore"`
 }
 
 var AppConfig *Config

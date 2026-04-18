@@ -29,3 +29,18 @@ upgrade:
   auto_check_enabled: true
   check_interval_hours: 24
 
+ignore:
+  commands:
+    - cd
+    - ls
+    - clear
+    - pwd
+    - exit
+    - whoami
+    - history
+    - mkdir
+    - touch
+    - nano
+  patterns:
+    - "^export .*(TOKEN|SECRET|PASSWORD|API_KEY|CREDENTIALS)="
+    - "^curl .*-H.*(Authorization|Bearer)"
