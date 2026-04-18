@@ -260,6 +260,28 @@ Homebrew users should use `brew upgrade Sadham-Hussian/recall/recall` instead.
 
 Set `auto_check_enabled: false` in `~/.recall/config.yaml` under `upgrade:` to disable the background version check.
 
+## Troubleshooting
+
+### Homebrew shows wrong version or "already installed"
+
+If `brew upgrade` reports `recall 64 already installed` or shows an incorrect version, the Cellar has stale data from an older formula. Fix with a clean reinstall:
+
+```bash
+brew uninstall --force Sadham-Hussian/recall/recall
+rm -rf "$(brew --cellar)/recall"
+brew install Sadham-Hussian/recall/recall
+brew list --versions recall    # should show the correct version
+```
+
+### CGO / SQLite errors on Linux
+
+If you see `Binary was compiled with 'CGO_ENABLED=0', go-sqlite3 requires cgo to work`, install GCC and rebuild:
+
+```bash
+apt-get install -y gcc
+CGO_ENABLED=1 make build
+```
+
 ## Semantic Retrieval With Ollama
 
 Semantic retrieval is optional and disabled by default.
