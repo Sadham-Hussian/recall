@@ -12,5 +12,6 @@ type CommandExecution struct {
 
 type Session struct {
 	SessionID string
+	Name      string
 	Commands  []CommandExecution
 }

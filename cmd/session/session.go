@@ -30,7 +30,7 @@ var sessionCmd = &cobra.Command{
 
 			shellPID := os.Getppid()
 
-			sessionID, commands, err := sessionService.GetCurrentSessionByShellPID(shellPID)
+			sessionID, name, commands, err := sessionService.GetCurrentSessionByShellPID(shellPID)
 			if err != nil {
 				log.Fatalf("failed to get session: %v", err)
 			}
@@ -43,6 +43,9 @@ var sessionCmd = &cobra.Command{
 			fmt.Println("Current Session")
 			fmt.Println("───────────────")
 			fmt.Println("Session ID:", sessionID)
+			if name != "" {
+				fmt.Println("Name:", name)
+			}
 			fmt.Println()
 
 			for i, c := range commands {
@@ -74,6 +77,9 @@ var sessionCmd = &cobra.Command{
 			fmt.Printf("Session %d\n", i+1)
 			fmt.Println("────────────")
 			fmt.Println("Session ID:", s.SessionID)
+			if s.Name != "" {
+				fmt.Println("Name:", s.Name)
+			}
 			fmt.Println()
 
 			for j, c := range s.Commands {
@@ -94,6 +100,7 @@ var sessionCmd = &cobra.Command{
 func GetSessionCmd() *cobra.Command {
 
 	sessionCmd.AddCommand(replayCmd)
+	sessionCmd.AddCommand(nameCmd)
 
 	sessionCmd.Flags().
 		IntVarP(&lastSessions, "last", "l", 0, "Show last N sessions")

@@ -12,18 +12,25 @@ import (
 )
 
 var replayCmd = &cobra.Command{
-	Use:   "replay [session_id]",
-	Short: "Replay commands from a session",
-	Args:  cobra.ExactArgs(1),
+	Use:               "replay [session_id]",
+	Short:             "Replay commands from a session",
+	Args:              cobra.ExactArgs(1),
+	ValidArgsFunction: sessionCompletion,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		config.LoadConfig()
 
-		sessionID := args[0]
+		input := args[0]
 
 		sessionService, err := session.NewSessionService()
 		if err != nil {
 			log.Fatalf("failed to create session service: %v", err)
+		}
+
+		// Resolve: try as session ID first, then as name
+		sessionID, name, err := sessionService.ResolveSession(input)
+		if err != nil {
+			log.Fatalf("session not found: %v", err)
 		}
 
 		commands, err := sessionService.GetCommandsBySessionID(sessionID)
@@ -36,7 +43,7 @@ var replayCmd = &cobra.Command{
 			return
 		}
 
-		printWorkflow(sessionID, commands)
+		printWorkflow(sessionID, name, commands)
 
 		mode := askExecutionMode()
 
@@ -57,12 +64,15 @@ var replayCmd = &cobra.Command{
 	},
 }
 
-func printWorkflow(sessionID string, commands []models.CommandExecution) {
+func printWorkflow(sessionID string, name string, commands []models.CommandExecution) {
 
 	fmt.Println()
 	fmt.Println("Session Workflow")
 	fmt.Println("────────────────")
 	fmt.Println("Session ID:", sessionID)
+	if name != "" {
+		fmt.Println("Name:", name)
+	}
 	fmt.Println()
 
 	for i, c := range commands {

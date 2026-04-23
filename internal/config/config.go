@@ -36,7 +36,8 @@ type Config struct {
 	} `mapstructure:"search"`
 
 	Session struct {
-		GapSeconds int `mapstructure:"gap_seconds"`
+		GapSeconds        int `mapstructure:"gap_seconds"`
+		AutocompleteLimit int `mapstructure:"autocomplete_limit"`
 	} `mapstructure:"session"`
 
 	Processor struct {

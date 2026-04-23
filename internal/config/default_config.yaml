@@ -18,6 +18,7 @@ search:
 
 session:
   gap_seconds: 600
+  autocomplete_limit: 100
 
 processor:
   batch_size: 5000
