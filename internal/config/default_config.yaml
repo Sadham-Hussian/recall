@@ -45,3 +45,10 @@ ignore:
   patterns:
     - "^export .*(TOKEN|SECRET|PASSWORD|API_KEY|CREDENTIALS)="
     - "^curl .*-H.*(Authorization|Bearer)"
+
+explain:
+  is_explain_enabled: false
+  provider: "ollama"
+  model: "llama3.2"
+  base_url: "http://localhost:11434"
+  timeout_seconds: 30

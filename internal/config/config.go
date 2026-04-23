@@ -57,6 +57,14 @@ type Config struct {
 		Commands []string `mapstructure:"commands"`
 		Patterns []string `mapstructure:"patterns"`
 	} `mapstructure:"ignore"`
+
+	Explain struct {
+		IsExplainEnabled bool   `mapstructure:"is_explain_enabled"`
+		Provider         string `mapstructure:"provider"`
+		Model            string `mapstructure:"model"`
+		BaseURL          string `mapstructure:"base_url"`
+		TimeoutSeconds   int    `mapstructure:"timeout_seconds"`
+	} `mapstructure:"explain"`
 }
 
 var AppConfig *Config

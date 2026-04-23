@@ -8,6 +8,7 @@ import (
 	"recall/cmd/daemon"
 	"recall/cmd/doctor"
 	"recall/cmd/embed"
+	"recall/cmd/explain"
 	exportcmd "recall/cmd/export"
 	importcmd "recall/cmd/import"
 	"recall/cmd/query"
@@ -94,6 +95,8 @@ func init() {
 
 	rootCmd.AddCommand(exportcmd.GetExportCmd())
 	rootCmd.AddCommand(importcmd.GetImportCmd())
+
+	rootCmd.AddCommand(explain.GetExplainCmd())
 
 }
 
