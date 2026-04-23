@@ -47,3 +47,16 @@ func (r *CommandChainRepository) GetNextCommands(
 
 	return result, err
 }
+
+// UpsertWithCount inserts a chain or adds to its occurrence count.
+// Used during import to preserve the original count rather than
+// incrementing by 1.
+func (r *CommandChainRepository) UpsertWithCount(prev, next, sessionID string, count int) error {
+	sql := `
+		INSERT INTO command_chains (prev_command, next_command, session_id, occurrence_count)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(prev_command, next_command, session_id)
+		DO UPDATE SET occurrence_count = occurrence_count + ?
+	`
+	return r.db.Exec(sql, prev, next, sessionID, count, count).Error
+}
