@@ -8,6 +8,8 @@ import (
 	"recall/cmd/daemon"
 	"recall/cmd/doctor"
 	"recall/cmd/embed"
+	exportcmd "recall/cmd/export"
+	importcmd "recall/cmd/import"
 	"recall/cmd/query"
 	"recall/cmd/record"
 	"recall/cmd/session"
@@ -89,6 +91,9 @@ func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	rootCmd.AddCommand(stats.GetStatsCmd())
+
+	rootCmd.AddCommand(exportcmd.GetExportCmd())
+	rootCmd.AddCommand(importcmd.GetImportCmd())
 
 }
 
