@@ -1,0 +1,1 @@
+ALTER TABLE command_executions ADD COLUMN source TEXT DEFAULT 'shell-hook';

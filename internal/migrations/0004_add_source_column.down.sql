@@ -1,0 +1,1 @@
+ALTER TABLE command_executions DROP COLUMN source;

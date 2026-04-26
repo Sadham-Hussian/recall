@@ -11,6 +11,7 @@ import (
 	"recall/cmd/explain"
 	exportcmd "recall/cmd/export"
 	importcmd "recall/cmd/import"
+	"recall/cmd/mcp"
 	"recall/cmd/query"
 	"recall/cmd/record"
 	"recall/cmd/session"
@@ -98,6 +99,7 @@ func init() {
 
 	rootCmd.AddCommand(explain.GetExplainCmd())
 
+	rootCmd.AddCommand(mcp.GetMCPCmd())
 }
 
 func Execute() error {

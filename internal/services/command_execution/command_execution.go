@@ -47,7 +47,7 @@ func (s *CommandExecutionService) ListRecent(limit int) ([]models.CommandExecuti
 }
 
 func (s *CommandExecutionService) RecordLiveCommandExecution(cfg *config.Config, cmdStr string,
-	timestamp int64, cwd string, exitCode int, shellPID int, sessionID string) (*models.CommandExecution, error) {
+	timestamp int64, cwd string, exitCode int, shellPID int, sessionID, source string) (*models.CommandExecution, error) {
 
 	normalized := format.NormalizeCommand(cmdStr)
 
@@ -66,6 +66,7 @@ func (s *CommandExecutionService) RecordLiveCommandExecution(cfg *config.Config,
 		ExitCode:  exitCode,
 		ShellPID:  shellPID,
 		SessionID: sessionID,
+		Source:    source,
 	}
 	err := s.CommandExecutionRepository.InsertWithFTS(execution)
 	if err != nil {

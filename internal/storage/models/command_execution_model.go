@@ -8,6 +8,7 @@ type CommandExecution struct {
 	ExitCode  int    `gorm:"column:exit_code"`
 	ShellPID  int    `gorm:"column:shell_pid"`
 	SessionID string `gorm:"column:session_id"`
+	Source    string `gorm:"column:source;default:'shell-hook'"`
 }
 
 type Session struct {

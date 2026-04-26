@@ -37,7 +37,7 @@ var recordCmd = &cobra.Command{
 			return
 		}
 
-		_, err = commandExecutionService.RecordLiveCommandExecution(config.AppConfig, cmdStr, ts, cwd, exitCode, shellPID, sessionID)
+		_, err = commandExecutionService.RecordLiveCommandExecution(config.AppConfig, cmdStr, ts, cwd, exitCode, shellPID, sessionID, "shell-hook")
 		if err != nil {
 			fmt.Println("Error recording command execution:", err)
 			return
