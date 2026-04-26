@@ -49,28 +49,9 @@ recall upgrade
 
 Re-run your original install method — `install.sh`, `brew upgrade Sadham-Hussian/recall/recall`, or `git pull && make install`. After reaching v1.1.0, all future upgrades go through `recall upgrade`.
 
-## Positioning
-
-If terminal history is raw logs, Recall is the beginning of a memory layer for terminal work.
-
-You can think of v1 as:
-
-- terminal memory for developers
-- a local RAG-style retrieval layer for shell workflows
-- an AI-powered command recall tool
-- a foundation for future terminal chat and reasoning workflows
-
 ## Why Recall
 
-Terminal history is useful, but it is usually:
-
-- tied to a single shell history file
-- hard to search when you remember intent but not exact syntax
-- weak at showing workflows instead of isolated commands
-- not designed to help resume interrupted work
-- not built as a retrieval layer for AI-assisted tooling
-
-Recall is an attempt to fix that by making command history structured, searchable, contextual, and eventually AI-native.
+Shell history is tied to one file per shell, hard to search by intent, and weak at showing workflows instead of isolated commands. Recall makes command history structured, searchable, and contextual — and exposes it as a retrieval layer for AI-assisted tooling.
 
 ## What Recall Can Do
 
@@ -91,36 +72,9 @@ Recall is an attempt to fix that by making command history structured, searchabl
 - Usage statistics — top commands, top directories, most-failed commands
 - Configurable ignore list for noisy or sensitive commands
 
-## What Recall Is Becoming
+## How It Works
 
-The long-term direction for Recall is larger than command history search.
-
-The vision is to turn Recall into an AI-powered terminal layer that can:
-
-- understand user intent instead of relying only on exact command matches
-- use retrieval over terminal history and workflows as context
-- support chat-based interaction on top of local command memory
-- reason about next steps in a terminal session
-- become a practical bridge between raw shell usage and LLM-assisted execution
-
-That future is not fully shipped yet, but v1 already includes the core pieces that make that direction possible: structured command storage, retrieval, sessions, command chains, and embeddings.
-
-## How It Works Today
-
-Recall stores command executions in SQLite and creates a full-text search index for fast keyword retrieval.
-
-Each recorded command can also:
-
-- be linked to a session
-- contribute to command-chain suggestions
-- be queued for embedding generation
-
-When embeddings are enabled, Recall uses Ollama to generate vectors for commands and combines semantic similarity with FTS results to answer intent-based queries like:
-
-- `recall ask "find docker cleanup command"`
-- `recall ask "how did I port-forward kubernetes service"`
-
-In other words, v1 already behaves like a lightweight local retrieval system for terminal actions.
+Recall stores command executions in SQLite with a full-text search index for keyword retrieval. Each command is linked to a session, contributes to command-chain suggestions, and (if embeddings are enabled) is queued for vectorization. Semantic queries combine FTS and vector similarity to answer intent-based questions like `recall ask "how did I port-forward postgres"`.
 
 ## Quick Start
 
@@ -429,84 +383,41 @@ recall ask "how did I port forward postgres"
 
 ## Commands
 
-### Setup
+Run `recall <command> --help` for full flags. Quick reference:
 
-- `recall init` - initialize config, database, and migrations
-- `recall hook <shell>` - print shell integration script for `zsh`, `bash`, or `fish`
-- `recall install` - show instructions to enable shell integration
-- `recall config` - ensure the config file exists
-- `recall migrate` - run database migrations
-- `recall doctor` - run local health checks
-- `recall version` - print version
-- `recall completion <shell>` - generate shell completion script for `bash`, `zsh`, or `fish`
-
-### Recording and history
-
-- `recall history` - import shell history into the database
-- `recall record` - internal hidden command used by shell hooks
-
-### Querying and retrieval
-
-- `recall last` - show the most recent command
-- `recall list` - list recent commands
-- `recall search <query>` - keyword/full-text search with ranking
-- `recall suggest <command>` - suggest likely next commands
-- `recall ask <query>` - semantic search using embeddings
-- `recall embed` - manually process the embedding queue
-
-### Sessions
-
-- `recall session` - show the current shell session
-- `recall session --last <n>` - show the latest sessions
-- `recall session replay <session_id>` - replay a recorded session
-- `recall session name <session_id> [label]` - name a session or show its name
-- `recall continue` - suggest the next command for the current shell workflow
-
-### Workflows
-
-- `recall workflow save <name>` - save a workflow (interactive or `--from-session <id>`)
-- `recall workflow list` - list all saved workflows
-- `recall workflow show <name>` - show steps in a workflow
-- `recall workflow run <name>` - execute a saved workflow
-- `recall workflow delete <name>` - delete a workflow
-
-### MCP
-
-- `recall mcp serve` - start the MCP server (stdio transport, used by AI clients)
-- `recall mcp setup <client>` - configure an AI client (`claude-code`, `claude-desktop`, `cursor`, `windsurf`, `codex`)
-
-### Explain
-
-- `recall explain <command>` - AI-powered explanation of a shell command (Ollama)
-
-### Stats
-
-- `recall stats` - show usage statistics
-- `recall stats --days <n>` - limit stats to the last N days
-- `recall stats --format <md|json>` - output as markdown or JSON
-
-### Export / Import
-
-- `recall export` - export command history as JSON (to stdout by default)
-- `recall export -o <file>` - export to a file
-- `recall export --days <n>` - export only last N days
-- `recall import <file>` - import history from a JSON file
-- `recall import <file> --replace` - wipe existing data before importing
-
-### Daemon
-
-- `recall daemon install` - install and start as a system service (launchd/systemd)
-- `recall daemon start` - start the daemon service
-- `recall daemon stop` - stop the daemon service
-- `recall daemon status` - show daemon service status
-- `recall daemon run` - run the daemon in the foreground
-- `recall daemon log` - tail the daemon log
-
-### Upgrade
-
-- `recall upgrade` - upgrade to the latest release
-- `recall upgrade --check` - check for updates without installing
-- `recall upgrade -y` - upgrade without confirmation
+| Command | Purpose |
+|---|---|
+| **Setup** | |
+| `recall init` | initialize config, database, and migrations |
+| `recall hook <shell>` | print shell integration for `zsh`, `bash`, or `fish` |
+| `recall config` / `recall migrate` / `recall doctor` | ensure config / run migrations / health check |
+| `recall completion <shell>` | generate shell completion script |
+| `recall version` | print version |
+| **History & Search** | |
+| `recall history` | import existing shell history |
+| `recall last` / `recall list` | show most recent / list recent commands |
+| `recall search <query>` | full-text + fuzzy search |
+| `recall ask <query>` | semantic search (Ollama) |
+| `recall suggest <command>` | suggest likely next commands |
+| `recall embed` | manually process embedding queue |
+| **Sessions & Workflows** | |
+| `recall session [--last N]` | show current or recent sessions |
+| `recall session replay <id>` | replay a recorded session |
+| `recall session name <id> [label]` | name a session or show its name |
+| `recall continue` | suggest next command for the current workflow |
+| `recall workflow save <name>` | save a workflow (interactive or `--from-session <id>`) |
+| `recall workflow list` / `show` / `run` / `delete` | manage saved workflows |
+| **AI Integrations** | |
+| `recall mcp serve` | start MCP server (stdio, used by AI clients) |
+| `recall mcp setup <client>` | configure `claude-code`, `claude-desktop`, `cursor`, `windsurf`, `codex` |
+| `recall explain <command>` | AI-powered command explanation (Ollama) |
+| **Insights & Backup** | |
+| `recall stats [--days N] [--format md\|json]` | usage statistics |
+| `recall export [-o file] [--days N]` | export history as JSON |
+| `recall import <file> [--replace]` | import history from JSON |
+| **Daemon & Upgrade** | |
+| `recall daemon install` / `start` / `stop` / `status` / `run` / `log` | manage embedding daemon |
+| `recall upgrade [--check] [-y]` | upgrade to the latest release |
 
 ## Default Config
 
