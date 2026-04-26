@@ -78,13 +78,18 @@ Recall is an attempt to fix that by making command history structured, searchabl
 - Import existing shell history
 - Search command history with full-text and fuzzy matching
 - Rank results using frequency, recency, success rate, cwd/project context, and session context
-- Group commands into sessions and replay them
+- Group commands into sessions, name them, and replay them
 - Suggest likely next commands based on historical command chains
 - Save and run reusable command workflows
 - Run semantic command search with Ollama embeddings
 - Auto-process embeddings via a background daemon
 - Self-upgrade to the latest release
 - Tab-complete commands, subcommands, flags, and workflow names
+- Plug into AI coding agents (Claude Code, Cursor, Windsurf, Codex, Claude Desktop) via MCP
+- AI-powered command explanation via local Ollama LLM
+- Export and import command history as JSON
+- Usage statistics — top commands, top directories, most-failed commands
+- Configurable ignore list for noisy or sensitive commands
 
 ## What Recall Is Becoming
 
@@ -177,6 +182,7 @@ recall ask "how did I port forward postgres"
 recall session
 recall session --last 5
 recall session replay <session_id>
+recall session name <session_id> "deploy debug"
 recall continue
 ```
 
@@ -221,6 +227,101 @@ recall completion bash > ~/.local/share/bash-completion/completions/recall
 
 ```fish
 recall completion fish > ~/.config/fish/completions/recall.fish
+```
+
+## MCP Integration (AI Coding Agents)
+
+Recall ships an MCP server (`recall mcp serve`) so AI coding agents can read and write your terminal history through the Model Context Protocol. Local stdio transport — no network.
+
+### Setup
+
+One command per supported client:
+
+```bash
+recall mcp setup claude-code
+recall mcp setup claude-desktop
+recall mcp setup cursor
+recall mcp setup windsurf
+recall mcp setup codex
+```
+
+Each setup command prints a tailored note about whether you should configure that agent to call `recall_record` (see below).
+
+### Available tools
+
+| Tool | What it does |
+|---|---|
+| `recall_search` | Full-text + fuzzy search of command history |
+| `recall_list` | List recent commands |
+| `recall_record` | Record a command into history |
+| `recall_session_list` / `recall_session_show` | Browse sessions |
+| `recall_stats` | Usage statistics |
+| `recall_workflow_list` / `recall_workflow_show` | Saved workflows |
+| `recall_suggest` | Suggest the next command from chain history |
+| `recall_explain` | AI-powered command explanation |
+
+### Should I configure my agent to call `recall_record`?
+
+Depends on whether the agent runs commands in your interactive terminal or its own subshell:
+
+- **Interactive-shell agents** (Cursor terminal mode, Windsurf Cascade): your shell hook already captures their commands. **Do not** configure them to call `recall_record` — it creates duplicate entries.
+- **Non-interactive subshell agents** (Claude Code, Codex, Claude Desktop with shell MCP): the shell hook does not fire on those subshells. **Configure** the agent (system prompt, `CLAUDE.md`, or equivalent rules file) to call `recall_record` after each command it runs.
+
+The `source` of each MCP-recorded command is auto-detected from the MCP handshake (`clientInfo.name`) — agents cannot override it.
+
+## AI Command Explanation
+
+Get a plain-English explanation of a shell command using a local Ollama LLM.
+
+### 1. Pull a model
+
+```bash
+ollama pull llama3.2
+```
+
+### 2. Enable in config
+
+In `~/.recall/config.yaml`:
+
+```yaml
+explain:
+  is_explain_enabled: true
+  provider: "ollama"
+  model: "llama3.2"
+  base_url: "http://localhost:11434"
+  timeout_seconds: 30
+```
+
+### 3. Run
+
+```bash
+recall explain "kubectl get pods -n prod -o jsonpath='{.items[*].metadata.name}'"
+```
+
+The same explanation is also available to AI agents via the `recall_explain` MCP tool.
+
+## Stats
+
+Show usage statistics — overview, top commands, top command groups, most-failed commands, and top directories.
+
+```bash
+recall stats                    # all-time
+recall stats --days 7           # last 7 days
+recall stats --format md        # markdown output
+recall stats --format json      # JSON output
+```
+
+## Export / Import
+
+Back up your command history, migrate between machines, or share data via JSON snapshots.
+
+```bash
+recall export                       # write JSON to stdout
+recall export -o recall.json        # write to a file
+recall export --days 30             # export only last 30 days
+
+recall import recall.json           # merge into existing data
+recall import recall.json --replace # wipe existing data first
 ```
 
 ## Background Embedding Daemon
@@ -358,6 +459,7 @@ recall ask "how did I port forward postgres"
 - `recall session` - show the current shell session
 - `recall session --last <n>` - show the latest sessions
 - `recall session replay <session_id>` - replay a recorded session
+- `recall session name <session_id> [label]` - name a session or show its name
 - `recall continue` - suggest the next command for the current shell workflow
 
 ### Workflows
@@ -367,6 +469,29 @@ recall ask "how did I port forward postgres"
 - `recall workflow show <name>` - show steps in a workflow
 - `recall workflow run <name>` - execute a saved workflow
 - `recall workflow delete <name>` - delete a workflow
+
+### MCP
+
+- `recall mcp serve` - start the MCP server (stdio transport, used by AI clients)
+- `recall mcp setup <client>` - configure an AI client (`claude-code`, `claude-desktop`, `cursor`, `windsurf`, `codex`)
+
+### Explain
+
+- `recall explain <command>` - AI-powered explanation of a shell command (Ollama)
+
+### Stats
+
+- `recall stats` - show usage statistics
+- `recall stats --days <n>` - limit stats to the last N days
+- `recall stats --format <md|json>` - output as markdown or JSON
+
+### Export / Import
+
+- `recall export` - export command history as JSON (to stdout by default)
+- `recall export -o <file>` - export to a file
+- `recall export --days <n>` - export only last N days
+- `recall import <file>` - import history from a JSON file
+- `recall import <file> --replace` - wipe existing data before importing
 
 ### Daemon
 
@@ -406,6 +531,7 @@ search:
 
 session:
   gap_seconds: 600
+  autocomplete_limit: 100
 
 processor:
   batch_size: 5000
@@ -416,6 +542,29 @@ daemon:
 upgrade:
   auto_check_enabled: true
   check_interval_hours: 24
+
+ignore:
+  commands:
+    - cd
+    - ls
+    - clear
+    - pwd
+    - exit
+    - whoami
+    - history
+    - mkdir
+    - touch
+    - nano
+  patterns:
+    - "^export .*(TOKEN|SECRET|PASSWORD|API_KEY|CREDENTIALS)="
+    - "^curl .*-H.*(Authorization|Bearer)"
+
+explain:
+  is_explain_enabled: false
+  provider: "ollama"
+  model: "llama3.2"
+  base_url: "http://localhost:11434"
+  timeout_seconds: 30
 ```
 
 ## Notes
