@@ -101,6 +101,7 @@ func setupClaudeCode(binaryPath string) error {
 		return fmt.Errorf("claude mcp add failed: %w (is claude-code installed?)", err)
 	}
 	fmt.Println("✔ Recall MCP server added to Claude Code")
+	printRecordGuidance("claude-code")
 	return nil
 }
 
@@ -172,6 +173,7 @@ func writeJSONMCPConfig(configPath, binaryPath, clientName string) error {
 	fmt.Printf("✔ Recall MCP server configured for %s\n", clientName)
 	fmt.Printf("  Config: %s\n", configPath)
 	fmt.Printf("  Restart %s to activate.\n", clientName)
+	printRecordGuidance(clientName)
 	return nil
 }
 
@@ -181,4 +183,27 @@ func GetMCPCmd() *cobra.Command {
 	mcpCmd.AddCommand(serveCmd)
 	mcpCmd.AddCommand(setupCmd)
 	return mcpCmd
+}
+
+// printRecordGuidance prints whether the client needs explicit recall_record
+// configuration based on whether it runs commands in the user's interactive
+// shell (where recall's hook already captures them) or its own subshell.
+func printRecordGuidance(clientName string) {
+	interactiveShellClients := map[string]bool{
+		"windsurf": true,
+		"cursor":   true,
+	}
+
+	fmt.Println()
+	if interactiveShellClients[clientName] {
+		fmt.Println("ℹ This client runs commands in your interactive terminal, which is")
+		fmt.Println("  already captured by recall's shell hook. Do NOT instruct the agent")
+		fmt.Println("  to call recall_record — it would create duplicate entries.")
+	} else {
+		fmt.Println("ℹ This client runs commands in a non-interactive subshell, which")
+		fmt.Println("  recall's shell hook does NOT capture. To record agent-executed")
+		fmt.Println("  commands, instruct the agent (via system prompt / CLAUDE.md /")
+		fmt.Println("  equivalent rules file) to call the `recall_record` MCP tool")
+		fmt.Println("  after each command it runs.")
+	}
 }

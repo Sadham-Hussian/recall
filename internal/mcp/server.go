@@ -1,6 +1,8 @@
 package mcp
 
 import (
+	"recall/cmd/setup"
+
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -8,7 +10,7 @@ import (
 func NewServer() *server.MCPServer {
 	s := server.NewMCPServer(
 		"recall",
-		"1.0.0",
+		setup.Version,
 		server.WithToolCapabilities(true),
 	)
 
@@ -34,11 +36,10 @@ func registerTools(s *server.MCPServer) {
 
 	// Record a command
 	s.AddTool(mcp.NewTool("recall_record",
-		mcp.WithDescription("Record a command execution to recall history. Call this after running shell commands so the user's history stays complete."),
+		mcp.WithDescription("Record a command execution to recall history. Only call this for commands executed in a non-interactive subshell or programmatic process (e.g. your own bash/exec tool). Do NOT call this for commands run in the user's interactive terminal — those are already captured by recall's shell hook. When in doubt, skip it."),
 		mcp.WithString("command", mcp.Required(), mcp.Description("The command that was executed")),
 		mcp.WithNumber("exit_code", mcp.Required(), mcp.Description("Exit code of the command")),
 		mcp.WithString("cwd", mcp.Required(), mcp.Description("Working directory where the command was run")),
-		mcp.WithString("source", mcp.Description("Source identifier, e.g. claude-code, cursor (default: mcp)")),
 	), handleRecord)
 
 	// Session list

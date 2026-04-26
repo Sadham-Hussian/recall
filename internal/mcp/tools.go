@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"recall/internal/config"
@@ -16,6 +19,7 @@ import (
 	"recall/internal/services/workflow"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
 )
 
 func toJSON(v any) string {
@@ -47,6 +51,73 @@ func getString(args map[string]any, key, defaultVal string) string {
 		}
 	}
 	return defaultVal
+}
+
+// logRecordDebug appends a single line per recall_record call to
+// ~/.recall/mcp-debug.log capturing process and clientInfo details.
+// Temporary — used to diagnose source mis-tagging across MCP clients.
+func logRecordDebug(ctx context.Context, args map[string]any, resolvedSource string) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+	dir := filepath.Join(home, ".recall")
+	_ = os.MkdirAll(dir, 0755)
+	f, err := os.OpenFile(filepath.Join(dir, "mcp-debug.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	var clientName, clientVersion, sessionState string
+	sess := server.ClientSessionFromContext(ctx)
+	switch {
+	case sess == nil:
+		sessionState = "nil"
+	default:
+		if withInfo, ok := sess.(server.SessionWithClientInfo); ok {
+			info := withInfo.GetClientInfo()
+			clientName = info.Name
+			clientVersion = info.Version
+			sessionState = "with-info"
+		} else {
+			sessionState = "no-info"
+		}
+	}
+
+	fmt.Fprintf(f,
+		"[%s] pid=%d ppid=%d session=%s clientName=%q clientVersion=%q resolvedSource=%q argsSource=%q command=%q cwd=%q\n",
+		time.Now().Format(time.RFC3339),
+		os.Getpid(), os.Getppid(),
+		sessionState, clientName, clientVersion,
+		resolvedSource,
+		getString(args, "source", ""),
+		getString(args, "command", ""),
+		getString(args, "cwd", ""),
+	)
+}
+
+// clientNameFromContext returns the client's name as captured during the
+// MCP initialize handshake (e.g. "claude-code", "cursor"). Returns "mcp"
+// if the session doesn't expose client info.
+func clientNameFromContext(ctx context.Context) string {
+	sess := server.ClientSessionFromContext(ctx)
+	if sess == nil {
+		return "mcp"
+	}
+	withInfo, ok := sess.(server.SessionWithClientInfo)
+	if !ok {
+		return "mcp"
+	}
+	info := withInfo.GetClientInfo()
+	if info.Name == "" {
+		return "mcp"
+	}
+	// Normalize: lowercase, replace spaces with hyphens for consistency
+	// e.g. "Claude Code" -> "claude-code"
+	name := strings.ToLower(info.Name)
+	name = strings.ReplaceAll(name, " ", "-")
+	return name
 }
 
 // ── recall_search ────────────────────────────────────────────────────────────
@@ -97,7 +168,12 @@ func handleRecord(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 	command := getString(args, "command", "")
 	exitCode := getInt(args, "exit_code", 0)
 	cwd := getString(args, "cwd", "")
-	source := getString(args, "source", "mcp")
+	// Default source = whatever client connected (claude-code, cursor, etc.)
+	// Falls back to "mcp" if client info isn't exposed by the session.
+	// defaultSource := clientNameFromContext(ctx)
+	source := clientNameFromContext(ctx)
+
+	// logRecordDebug(ctx, args, source)
 
 	if command == "" {
 		return mcp.NewToolResultError("command is required"), nil
