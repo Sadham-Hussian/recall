@@ -103,16 +103,28 @@ func AssetName() string {
 	return fmt.Sprintf("recall_%s_%s.tar.gz", runtime.GOOS, runtime.GOARCH)
 }
 
+// checksumsAssetName returns the per-platform checksum filename produced by
+// the release pipeline: darwin uses "checksums.txt", linux uses goreleaser's
+// default "recall_<version>_checksums.txt".
+func checksumsAssetName(release *Release) string {
+	if runtime.GOOS == "linux" {
+		version := strings.TrimPrefix(release.TagName, "v")
+		return fmt.Sprintf("recall_%s_checksums.txt", version)
+	}
+	return "checksums.txt"
+}
+
 // Download fetches both the platform tarball and checksums.txt into temp
 // files. Callers must Remove both returned paths.
 func Download(ctx context.Context, release *Release) (tarballPath, checksumsPath string, err error) {
 	want := AssetName()
+	checksumsName := checksumsAssetName(release)
 	var tarballURL, checksumsURL string
 	for _, a := range release.Assets {
 		switch a.Name {
 		case want:
 			tarballURL = a.BrowserDownloadURL
-		case "checksums.txt":
+		case checksumsName:
 			checksumsURL = a.BrowserDownloadURL
 		}
 	}
